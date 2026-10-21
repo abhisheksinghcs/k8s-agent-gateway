@@ -135,6 +135,64 @@ available. A stdio-only server needs a compatible adapter or another supported
 hosting arrangement. Verify transport, authentication, and session behavior
 for each backend rather than assuming every MCP server is interchangeable.
 
+#### Phase-by-phase MCP and model events
+
+This is an observability reference, not evidence that logging or tracing is
+enabled. Protocol messages and application events are different: tool
+discovery and invocation use MCP, while adding tools to model context and
+interpreting a model's tool selection happen in the agent application.
+"Context injection" here means adding tool definitions or results to a model
+request, not a prompt-injection attack.
+
+Record the protocol revision on each gateway leg before choosing expected
+events. Revisions through `2025-11-25` use an `initialize` handshake followed
+by `notifications/initialized`. Revision `2026-07-28` uses per-request version,
+identity, and capability metadata instead, with optional `server/discover`;
+it does not require that handshake. A compatible proxy can speak different
+revisions to the client and the upstream server. Verify actual SDK and gateway
+behavior rather than assuming the two legs have identical messages or IDs.
+
+| Phase | Requests or events to look for | Where to look and what it proves |
+|---|---|---|
+| 1. Connection and authentication | DNS resolution, TCP connection, TLS handshake for HTTPS, HTTP request to the configured MCP path; authentication challenge or rejection if applicable. | Client transport logs, gateway access/security logs, and upstream connection logs. Reachability is not proof of MCP compatibility. Pooled connections need not reconnect for every call. |
+| 2. Initialization or version discovery | Legacy: `initialize` request/response with protocol version, identity and capabilities, then `notifications/initialized` (no JSON-RPC response). Modern: optional `server/discover`, followed by version/capability metadata on requests; unsupported-version errors if incompatible. | Client and MCP-aware gateway/server logs. Distinguish client-to-gateway discovery from gateway-to-backend discovery. Legacy session identifiers may exist; modern requests do not require a protocol session. |
+| 3. Tool discovery | `tools/list` request and response containing names, descriptions and `inputSchema`; additional pages when `nextCursor` is returned. | Client discovery logs and gateway/server MCP logs. Record returned tool count and catalog version/hash. Cached discovery may mean no fresh request for a new user turn. |
+| 4. Tool definitions added to model context | Agent filters/converts discovered tools into the model API's tool definitions, commonly a `tools` field in `POST /v1/chat/completions`. | Agent context-assembly logs; model-route telemetry if configured. This is an LLM API request, not an MCP message. Record included names/count and schema hash rather than full prompts. |
+| 5. Model selection | Model response may contain `tool_calls` with a call ID, tool/function name and arguments, or may answer without a tool. Streaming responses may deliver these incrementally. | Agent/model-response telemetry. A model-selected tool is a proposal, not evidence of execution; tool calling depends on model and serving configuration. |
+| 6. Validation and approval | Agent validates arguments, maps the model-facing name to its MCP target, and applies approval/access checks. A rejected or denied proposal produces no `tools/call`. | Agent validation/approval events and configured authorization logs. Record allowed/denied and a safe reason. Gateway policies may also reject a call during forwarding. |
+| 7. Tool invocation | Agent sends JSON-RPC `tools/call`, with `params.name` and `params.arguments`, through the MCP route. The gateway forwards to the owning target; virtual MCP may translate a prefixed name. | Client, gateway MCP telemetry, and server tool-handler start event. Record logical target, exposed and upstream tool names, request ID, start time and attempt number. |
+| 8. Execution and result | Tool handler may call another API, then returns an MCP result (`content`, optional `structuredContent`, and `isError`) or a JSON-RPC error. Timeouts and transport failures are separate outcomes. | MCP server handler/downstream logs, gateway, and client. HTTP 200 alone does not prove success: inspect JSON-RPC `error` and tool-result `isError`. Downstream API traffic is not automatically gateway traffic. |
+| 9. Tool result added to model context | Agent validates/sanitizes the result and sends a follow-up model request; commonly a message with role `tool` and the matching `tool_call_id`. | Agent context-assembly logs and model-route telemetry. This is another LLM API request, not a new MCP method. Treat tool output as untrusted data, not authoritative instructions. |
+| 10. Completion or another iteration | Model returns a final answer or requests more tools, repeating phases 5-9. Connections may remain open; closure and cancellation depend on protocol/transport. | Agent turn-completion events and model telemetry. Record final outcome, elapsed time and tool-call count; do not require disconnect events at the end of every turn. |
+
+For virtual MCP, discovery can fan out to several upstream servers. The
+gateway may cache catalogs, filter tools through configured policies, and
+translate names and protocol versions. One client request is not necessarily
+one identical upstream request. Trace both legs to identify which backend
+provided a tool and which one executed it.
+
+Suggested correlation fields for future instrumentation (these are not
+existing log field names or enabled settings):
+
+- UTC timestamp, component, event/phase, duration, outcome and safe error code.
+- Agent run/turn ID, distributed trace/span IDs where propagation is supported, and gateway request ID.
+- MCP JSON-RPC request ID scoped to its connection/leg; notifications have no request ID. Track a legacy session only where applicable and avoid logging bearer-like identifiers in plaintext.
+- Model tool-call ID and its explicit mapping to the MCP request ID. They are different identifiers and are not automatically correlated by the gateway.
+- Route/backend identity, protocol revision, exposed/upstream tool names, catalog/schema hash and attempt number.
+
+Ordinary HTTP access logs may show only `POST /mcp`, status and latency, not
+`tools/list` or `tools/call` inside the JSON-RPC body. MCP-aware logging or
+application spans are needed for those details; agent instrumentation is
+needed for context assembly and selection. Tracing must be explicitly enabled
+and verified. Do not assume the gateway's default logs expose all phases.
+Log structured metadata by default, not credentials, full prompts, raw tool
+arguments/results or sensitive content. Do not enable blanket body logging
+to fill an observability gap, or automatically retry side-effecting calls.
+
+Protocol references: [legacy lifecycle (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle),
+[versioning and compatibility (2026-07-28)](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning),
+and [tools (2026-07-28)](https://modelcontextprotocol.io/specification/2026-07-28/server/tools).
+
 #### Individual endpoints versus virtual MCP
 
 Virtual MCP, also called multiplexing or federation, presents tools from
