@@ -34,6 +34,54 @@ flowchart LR
 - FACT: this SKU defaults to a 2040 GB ephemeral OS disk that breaks node bootstrap; the pool uses a 128 GB managed disk (T-006).
 - Spot: the node can be evicted at any time (D-008). Standard GPU quota is unavailable (T-005).
 
+### Why Kubernetes needs the NVIDIA device plugin
+
+On a standalone machine, such as the ThinkPad running llama.cpp in Docker,
+the NVIDIA driver and NVIDIA Container Toolkit can provide GPU access without
+a Kubernetes device plugin. For example, `docker run --gpus all ...` explicitly
+requests GPU access for that container; no Kubernetes scheduler is involved.
+
+| Component | Responsibility |
+|---|---|
+| NVIDIA driver | Lets the operating system communicate with the GPU. |
+| `nvidia-smi` | Reports GPU status, memory usage, driver details, and processes. It is a diagnostic tool, not a Kubernetes resource allocator. |
+| NVIDIA Container Toolkit | Integrates GPU device and NVIDIA library access with the container runtime. |
+| NVIDIA device plugin | Discovers GPU devices, registers them with kubelet, reports their availability, and participates in allocating them to containers. |
+
+Kubelet is the Kubernetes agent on each worker node. The plugin registers GPU
+resources with kubelet so the scheduler can account for them. Our llama.cpp
+pod requests one GPU resource through its container limits:
+
+```yaml
+resources:
+  limits:
+    nvidia.com/gpu: 1
+```
+
+The scheduler selects a node with an available GPU resource; kubelet and the
+plugin coordinate device allocation, and the configured container runtime
+provides GPU access. A working `nvidia-smi` on a node does not prove that
+Kubernetes can allocate its GPU. In this lab, the driver worked before the
+plugin was deployed, but the node did not advertise `nvidia.com/gpu` (T-007).
+
+Our node exposes a MIG (Multi-Instance GPU) partition: a hardware-isolated
+portion of a physical GPU with about 46 GiB of GPU memory. With
+`MIG_STRATEGY=single`, the plugin advertises this partition as one
+`nvidia.com/gpu` resource. Here, requesting `1` means one exposed MIG
+partition, not an entire physical GPU. It also does not mean one model:
+llama.cpp manages several models inside the pod holding that allocation.
+
+The plugin runs as a DaemonSet targeting the GPU node label, with both GPU
+and Spot tolerations. Kubernetes starts a plugin pod on a matching replacement
+node after Spot eviction. The plugin does not install the driver, load model
+weights, or run inference. Its privileged configuration is a lab-specific
+requirement observed during testing (T-007), not a universal requirement for
+all NVIDIA device plugin deployments.
+
+In short: the driver makes the GPU usable by the machine; the Container
+Toolkit makes it accessible to containers; the device plugin makes it
+allocatable through Kubernetes.
+
 ## llama.cpp (router mode, four models; single-model path VALIDATED earlier)
 
 - `k8s/llm/llama-cpp.yaml`: namespace `llm`, PVC `llama-models` (64 GiB `managed-csi-premium`, RWO), ConfigMap `llama-models-preset`, Deployment `llama-cpp` (strategy `Recreate`, image pinned by digest, router mode: `--models-preset /config/models.ini --models-max 3 -ngl 99 -c 8192`, `LLAMA_CACHE=/models`), ClusterIP Service `llama-cpp:8080` (D-009, D-010, D-011).
