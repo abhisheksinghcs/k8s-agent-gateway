@@ -1,0 +1,56 @@
+# NVIDIA device plugin for the self-managed GPU path. Based on the manifest in the AKS GPU docs
+# (nvidia/k8s-device-plugin v0.18.0). MIG_STRATEGY=single exposes the MIG slice as nvidia.com/gpu.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gpu-resources
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nvidia-device-plugin-daemonset
+  namespace: gpu-resources
+spec:
+  selector:
+    matchLabels:
+      name: nvidia-device-plugin-ds
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: nvidia-device-plugin-ds
+    spec:
+      nodeSelector:
+        workload: gpu-inference
+      tolerations:
+        - key: sku
+          operator: Equal
+          value: gpu
+          effect: NoSchedule
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      priorityClassName: system-node-critical
+      containers:
+        - name: nvidia-device-plugin-ctr
+          image: nvcr.io/nvidia/k8s-device-plugin:v0.18.0
+          env:
+            - name: FAIL_ON_INIT_ERROR
+              value: "false"
+            - name: MIG_STRATEGY
+              value: single
+            - name: NVIDIA_MIG_MONITOR_DEVICES
+              value: all
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          volumeMounts:
+            - name: device-plugin
+              mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins

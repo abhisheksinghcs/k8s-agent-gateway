@@ -1,0 +1,35 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.local.*
+*.pem
+*.key
+*.pfx
+
+# Kubeconfigs and Azure local state
+kubeconfig*
+.kube/
+.azure/
+
+# Parameter files with real values (commit *.example.* only)
+*.bicepparam
+!*.example.bicepparam
+infra/*.parameters.json
+!infra/*.parameters.example.json
+
+# Build artifacts / generated ARM
+infra/*.json
+!infra/*.parameters.example.json
+
+# Local model weights and caches
+models/
+*.gguf
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# OS / editor
+.DS_Store

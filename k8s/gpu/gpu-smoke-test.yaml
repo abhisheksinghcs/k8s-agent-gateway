@@ -1,0 +1,26 @@
+# One-shot GPU smoke test: requests the GPU, tolerates both GPU-pool taints, prints nvidia-smi.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-smoke-test
+  namespace: gpu-resources
+spec:
+  restartPolicy: Never
+  nodeSelector:
+    workload: gpu-inference
+  tolerations:
+    - key: sku
+      operator: Equal
+      value: gpu
+      effect: NoSchedule
+    - key: kubernetes.azure.com/scalesetpriority
+      operator: Equal
+      value: spot
+      effect: NoSchedule
+  containers:
+    - name: smi
+      image: nvidia/cuda:12.4.1-base-ubuntu22.04
+      command: ["nvidia-smi"]
+      resources:
+        limits:
+          nvidia.com/gpu: 1

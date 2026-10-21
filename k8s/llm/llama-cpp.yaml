@@ -1,0 +1,141 @@
+# llama.cpp router on the Spot GPU node. Internal ClusterIP only (D-009, D-010, D-011).
+# Router mode: several models served from one pod; each loads on demand and is cached on the PVC.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-models-preset
+  namespace: llm
+data:
+  models.ini: |
+    version = 1
+
+    [qwen2.5-7b-instruct]
+    hf-repo = bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+
+    [qwen2.5-coder-7b-instruct]
+    hf-repo = bartowski/Qwen2.5-Coder-7B-Instruct-GGUF:Q4_K_M
+
+    [llama-3.1-8b-instruct]
+    hf-repo = bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+
+    [phi-4]
+    hf-repo = bartowski/phi-4-GGUF:Q4_K_M
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-models
+  namespace: llm
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: managed-csi-premium
+  resources:
+    requests:
+      storage: 64Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-cpp
+  namespace: llm
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: llama-cpp
+  template:
+    metadata:
+      labels:
+        app: llama-cpp
+    spec:
+      nodeSelector:
+        workload: gpu-inference
+      tolerations:
+        - key: sku
+          operator: Equal
+          value: gpu
+          effect: NoSchedule
+        - key: kubernetes.azure.com/scalesetpriority
+          operator: Equal
+          value: spot
+          effect: NoSchedule
+      automountServiceAccountToken: false
+      containers:
+        - name: llama-server
+          # server-cuda13, build b11749-1d88cb05f, validated 2026-10-20; the digest is the pin.
+          image: ghcr.io/ggml-org/llama.cpp@sha256:78d0541639f5ed3f463e4bef8284027792e2d74cc2311b7628e17c2a0e7587db
+          args:
+            - "--models-preset"
+            - "/config/models.ini"
+            - "--models-max"
+            - "3"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8080"
+            - "-ngl"
+            - "99"
+            - "-c"
+            - "8192"
+          env:
+            - name: LLAMA_CACHE
+              value: /models
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: "4"
+              memory: 16Gi
+            limits:
+              memory: 48Gi
+              nvidia.com/gpu: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 120
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          volumeMounts:
+            - name: models
+              mountPath: /models
+            - name: preset
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: llama-models
+        - name: preset
+          configMap:
+            name: llama-models-preset
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-cpp
+  namespace: llm
+spec:
+  type: ClusterIP
+  selector:
+    app: llama-cpp
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
