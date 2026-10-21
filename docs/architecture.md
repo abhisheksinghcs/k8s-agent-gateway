@@ -103,6 +103,88 @@ FACT from the official install guide (v1.6.0):
 
 Place the proxy on the `app` pool. Pin versions. Gateway validation requires a real client -> agentgateway -> llama.cpp -> model request.
 
+### MCP connectivity concepts (reference, not deployed)
+
+The intended experiments include MCP servers running as pods behind internal
+Services, and third-party MCP servers reached over HTTPS. These are future
+possibilities, not deployed or validated paths. The gateway proxies requests;
+the agent application still discovers tools, supplies tool definitions to the
+model, executes requested tool calls, and returns results to the model.
+Routing model and MCP traffic through one gateway does not automatically give
+llama.cpp the ability to call MCP tools.
+
+#### Stdio versus Streamable HTTP
+
+MCP is a protocol; its transport determines how messages reach the server.
+
+| Transport | How it works | Implication for Kubernetes |
+|---|---|---|
+| Stdio | A client launches a server process and exchanges protocol messages through its standard input/output streams. | A pod alone does not expose those streams as a network service. |
+| Streamable HTTP | A server listens on a network endpoint, commonly `/mcp`. | Clients or the gateway can reach it through a Kubernetes Service. |
+
+Declaring a container port does not make a stdio-only program listen on that
+port. A transport adapter can launch the stdio server and bridge MCP messages
+between HTTP and the process streams:
+
+```text
+Client -> gateway -> HTTP adapter -> stdin/stdout -> MCP server process
+```
+
+For network-hosted servers, prefer native Streamable HTTP support where
+available. A stdio-only server needs a compatible adapter or another supported
+hosting arrangement. Verify transport, authentication, and session behavior
+for each backend rather than assuming every MCP server is interchangeable.
+
+#### Individual endpoints versus virtual MCP
+
+Virtual MCP, also called multiplexing or federation, presents tools from
+several upstream MCP servers through one logical MCP endpoint and connection.
+It does not combine their programs or move them into a single pod.
+
+```text
+Client -> one gateway MCP endpoint
+            |-> Documentation MCP server: search_docs
+            |-> Deployment MCP server: deployment_status
+            |-> Remote incident MCP server: incident_lookup
+```
+
+The gateway aggregates tool discovery and forwards each tool invocation to
+the server providing it. Tool names can be prefixed with target names to
+avoid collisions. The agent/model still chooses the tool; the gateway routes
+the call rather than deciding which tool solves the user's task.
+
+| Prefer virtual MCP when... | Prefer individual endpoints when... |
+|---|---|
+| Related servers form one useful toolkit, such as engineering tools. | Servers have distinct purposes or trust boundaries. |
+| Many clients need the same curated collection of tools. | Clients need small, different subsets of tools. |
+| Backend changes should not require every client to update its server connections. | Explicit per-server connection control is useful. |
+| Centralized policies can express the required access boundaries. | Different authentication or consent requirements make aggregation awkward. |
+
+Aggregation has tradeoffs:
+
+- Tool overload: a large catalog can increase model context use and make tool selection harder, depending on the client's tool-loading behavior.
+- Failure coupling: an unavailable backend can affect the aggregated session, depending on the configured failure mode.
+- Security complexity: one connection must not imply access to every tool. Client authentication, upstream credentials, and tool authorization remain separate concerns.
+- Troubleshooting: logs must identify the underlying target and tool, not just the shared endpoint.
+
+Possible rollout approach, subject to architecture review: prove individual
+endpoints and authentication first, then aggregate a small set of related,
+low-risk tools. Keep administrative or destructive tools separate until
+appropriate access controls are established. Separate endpoints alone are
+not an authorization boundary. Both individual endpoints for diagnostics and
+a curated virtual endpoint for everyday use can coexist.
+
+Gateway routing only applies to requests sent through it. Enforcing no bypass
+requires network controls; an MCP server's own downstream API calls do not
+automatically pass through the gateway. Avoid blanket retries of tool calls
+that could repeat side effects.
+
+Official references: [Static MCP](https://agentgateway.dev/docs/kubernetes/latest/documentation/mcp/static-mcp/),
+[Virtual MCP](https://agentgateway.dev/docs/kubernetes/latest/documentation/mcp/virtual/),
+and [component architecture](https://agentgateway.dev/docs/kubernetes/latest/documentation/about/architecture/).
+These links track the latest documentation; verify behavior against the
+selected release before implementation.
+
 ## Security posture (current)
 
 - No public exposure of llama.cpp or any service; the AKS API server is public with local accounts enabled (D-007).
