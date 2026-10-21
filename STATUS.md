@@ -1,6 +1,6 @@
 # STATUS
 
-Last updated: 2026-10-20 (Phases 5-7 VALIDATED by independent Tester: direct llama.cpp inference on the Spot GPU; next: agentgateway)
+Last updated: 2026-10-21 (documentation and MCP requirements handoff; no new deployment or live cluster validation)
 
 Labels used: FACT, DECISION, ASSUMPTION, HYPOTHESIS, OPEN QUESTION.
 Lifecycle: PLANNED -> CREATED -> DEPLOYED -> VALIDATED (or FAILED).
@@ -18,10 +18,16 @@ Details: [docs/architecture.md](docs/architecture.md). Rationale: [docs/decision
 - DECISION: region is **southeastasia** (D-005). Cost is not a constraint.
 - DECISION: standard GPU quota is not expected, so the GPU pool runs on **Spot** (D-008). The node can be evicted at any time.
 - `PROJECT_CONSTITUTION.md` is complete and governs the project.
+- DECISION: the first custom MCP server is for learning and lab-information demonstrations, written in Python. A code walkthrough is required after implementation. Hosting and permission recommendations remain proposed pending agent review.
 
 ## Current phase
 
 Phase 8: install agentgateway v1.6.0 on the `app` pool and validate the control plane. Before Phase 9, get an independent Tester pass on the router-mode llama.cpp (D-011), because the gateway must not be wired to an unvalidated upstream.
+
+Gateway implementation remains paused during design discussions. The next
+requested implementation topic is a Python lab-information MCP server;
+invoke `architect` to review scope and sequencing before `developer` starts.
+Do not treat this discussion as a completed phase or gateway deployment.
 
 ## Phase tracker
 
@@ -55,6 +61,18 @@ Phase 8: install agentgateway v1.6.0 on the `app` pool and validate the control 
 | GPU smoke test (`k8s/gpu/gpu-smoke-test.yaml`) | DEPLOYED, passed | See evidence; not yet independently validated |
 | llama.cpp (`k8s/llm/llama-cpp.yaml`) | DEPLOYED, router mode with 4 models (D-011); single-model version was VALIDATED | Router change tested by Developer only; needs an independent Tester pass. agentgateway path NOT validated |
 | agentgateway | PLANNED | |
+| Python lab-information MCP server | PLANNED | Purpose and language selected; candidate tools and hosting explained in `docs/architecture.md`. No implementation, deployment, or validation yet. |
+
+## Current handoff: MCP learning requirements
+
+- Audience: learning, customer demonstrations, and explaining the project to hiring managers; not a published production application.
+- Candidate tools: `get_lab_overview`, `list_model_presets`, `get_model_health`. Proposed permissions: read-only, no shell execution or Kubernetes API access. The human delegated permission selection; independent review is still required.
+- Proposed implementation: official `mcp` Python SDK's FastMCP interface, Streamable HTTP `/mcp`, one replica on the `app` pool, ClusterIP, stateless operation where supported, and no automatic ServiceAccount token mount. Verify SDK/protocol compatibility before accepting these choices.
+- `docs/architecture.md` now explains GPU plugin responsibilities, MCP transports/adapters, virtual MCP tradeoffs, the phase-by-phase MCP/LLM event sequence, and the proposed server hosting/security model. These are documentation additions, not enabled telemetry or deployed MCP capabilities.
+- Observability must distinguish MCP discovery/invocation from agent-side context assembly and model selection. Correlate both gateway legs without logging secrets or raw sensitive payloads.
+- Required implementation workflow: Architect review; Developer implementation and focused checks; Tester independent discovery/invocation validation; Security Reviewer review of information exposure, networking and credentials; Architect acceptance. Record every invocation in `docs/agent-execution-log.md`.
+- After implementation, walk the human through tool functions, configuration, HTTP/session handling, health checks, logs, container packaging, and Kubernetes routing. Do not assume they know TypeScript or the SDK internals.
+- No live cluster checks were run during this documentation session; deployment descriptions below remain last-known evidence.
 
 ## Evidence
 
@@ -104,19 +122,19 @@ None blocking. Risks:
 2. (resolved, D-010) First model: Qwen2.5-7B-Instruct Q4_K_M. Larger models up to ~30B at 4-bit should fit in the ~46 GiB MIG slice (untested).
 3. (resolved, D-009) Model storage: Azure Disk PVC.
 4. (resolved) `.github/copilot-instructions.md` is now complete.
-5. `image.png` is redundant and untracked; recommend deleting (awaiting OK).
+5. `image.png` is tracked; previously suggested removal remains awaiting human approval.
 6. Whether to submit a support ticket for standard GPU quota to allow non-Spot later.
 7. Add a NetworkPolicy and an API key for llama-server before any wider exposure (Phase 11).
 
 ## Repository notes
 
-- Governing files renamed to uppercase (D-001). Only the initial commit exists; all current files are untracked.
+- Governing files renamed to uppercase (D-001). Lab implementation, governance, and explanatory documentation are committed and pushed; consult Git for current history.
 - `main.py`, `pyproject.toml`, `.python-version`: uv scaffold stubs unrelated to the lab. Untouched.
 - Failed GPU pools were deleted (they were our own failed artifacts). No other resources were deleted.
 
-## Files changed this session
+## Files changed in this documentation session
 
-`.gitignore`, `README.md`, `STATUS.md`, `PROJECT_CONSTITUTION.md` (user-updated), `docs/*.md`, `infra/main.bicep`, `scripts/{env,preflight,up,down,status}.sh`, `k8s/gpu/nvidia-device-plugin.yaml`, `k8s/gpu/gpu-smoke-test.yaml`.
+`docs/architecture.md`, `STATUS.md`. Earlier explanation updates were already committed and pushed. No implementation or infrastructure files changed in this documentation session.
 
 ## Plan (remaining)
 
@@ -125,4 +143,8 @@ None blocking. Risks:
 
 ## Next action
 
-Phase 5 (model storage) and Phase 6 (llama.cpp deployment).
+Architect review of the proposed Python lab-information MCP server and its
+sequence relative to Phase 8. Then proceed through the recorded agent
+workflow when implementation begins, and provide the requested code
+walkthrough. Keep agentgateway and MCP lifecycle states separate; preserve
+the independent router-mode llama.cpp validation prerequisite before Phase 9.

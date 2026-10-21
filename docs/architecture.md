@@ -113,6 +113,57 @@ model, executes requested tool calls, and returns results to the model.
 Routing model and MCP traffic through one gateway does not automatically give
 llama.cpp the ability to call MCP tools.
 
+#### First lab MCP server: requirements and proposed hosting
+
+Human requirements (2026-10-21): Python, lab-information tools, and a learning
+and demonstration experience that can be explained to customers and hiring
+managers. A code walkthrough is required after implementation. No MCP server
+has been implemented or deployed yet; the choices below are proposals for
+architectural review, not accepted implementation decisions.
+
+- Candidate tools: `get_lab_overview`, `list_model_presets`, and `get_model_health`.
+- Start read-only, without shell execution or Kubernetes API access. A health check must not trigger inference or load a model; configured presets are not proof that models are loaded or healthy.
+- Prefer the FastMCP interface in the official `mcp` Python SDK for this small server. Distinguish it from the separately maintained `fastmcp` package; verify the chosen release's transport, protocol, security, and session support before implementation, then pin dependencies.
+- Use Streamable HTTP at `/mcp`, one replica on the CPU `app` pool, an internal ClusterIP Service, and separate application health endpoints.
+- Prefer stateless HTTP operation where the selected SDK and clients support it; verify discovery and invocation with MCP Inspector independently of model tool calling.
+
+**Binding versus exposure:** `0.0.0.0:8000` means the Python process accepts
+IPv4 connections on the pod's interfaces. It does not allocate a public IP.
+A ClusterIP Service provides a stable internal address and forwards traffic
+to the pod's listening port, for example:
+
+```text
+Client -> agentgateway -> ClusterIP Service:80 -> pod IP:8000 -> /mcp
+```
+
+Binding only to `127.0.0.1` would normally prevent Service traffic from
+reaching the process. ClusterIP is not authentication or a complete network
+boundary: other reachable workloads can call it unless additional controls
+restrict access. Initial laptop access should use local port-forwarding,
+not a public LoadBalancer.
+
+**Session behavior:** stateful operation remembers protocol/session state
+between requests, so restarts can invalidate sessions and multiple replicas
+can require session-aware routing or shared state. Stateless operation avoids
+depending on an in-memory protocol session and is simpler for independent
+read-only calls. It does not remove authentication requirements or mean the
+agent loses conversation history; that history belongs to the agent
+application. Session behavior is SDK- and protocol-version-dependent; verify
+the actual lifecycle rather than inferring it from the HTTP transport alone.
+
+**Kubernetes credentials:** Kubernetes normally mounts a ServiceAccount token
+that identifies a pod's application to the Kubernetes API; RBAC controls its
+permissions. These tools can read mounted configuration and call llama.cpp's
+HTTP endpoint without Kubernetes API credentials. Set
+`automountServiceAccountToken: false` (as the llama.cpp pod already does).
+This removes an unnecessary credential, not ordinary HTTP connectivity. If
+future tools need Kubernetes access, review narrowly scoped RBAC first.
+
+Do not bake tokens, API keys, or kubeconfig files into source or container
+images. Supply any future credentials securely at runtime. Read-only tools
+can still expose information: review returned data, endpoint access, and
+redacted lifecycle telemetry before sharing the lab with others.
+
 #### Stdio versus Streamable HTTP
 
 MCP is a protocol; its transport determines how messages reach the server.
