@@ -113,19 +113,127 @@ model, executes requested tool calls, and returns results to the model.
 Routing model and MCP traffic through one gateway does not automatically give
 llama.cpp the ability to call MCP tools.
 
-#### First lab MCP server: requirements and proposed hosting
+#### First lab MCP server: two-tool LOCAL source VALIDATED
 
 Human requirements (2026-10-21): Python, lab-information tools, and a learning
 and demonstration experience that can be explained to customers and hiring
-managers. A code walkthrough is required after implementation. No MCP server
-has been implemented or deployed yet; the choices below are proposals for
-architectural review, not accepted implementation decisions.
+managers. The code/configuration walkthrough is in [README.md](../README.md).
+Architect accepts the D-012 teaching amendment's LOCAL source milestone for
+supervised loopback only: independent Tester 63 PASS in 13.95s plus own SDK
+HTTP probes, Security Reviewer 63 PASS in 13.90s plus 23 supplemental checks.
+Actual SDK calls negotiated `2025-11-25`, discovered/called both tools without
+a session ID, preserved the fixed target despite extra arguments and bounded
+slow-body observation at 3.006s. Probe/Host/Origin, errors/logs, cleanup and offline
+checks passed. Evidence: [agent-execution-log.md](agent-execution-log.md).
+This supersedes historical three-tool/54-test acceptance for current source,
+not the former guard's response-protection guarantees. README's twelve-minute
+code agenda is proposed, not measured or delivered; Kubernetes/gateway is a
+separate later 10-15 minute discussion. No live upstream or gateway proof follows.
+The MCP component is now DEPLOYED under D-014 with Developer implementation
+evidence for actual AMD64 execution, immutable registry delivery, Kubernetes
+runtime and live upstream health. Independent Tester now confirms these paths
+and 63 source tests; Security Reviewer gives bounded GO. Architect ACCEPTS D-014
+as VALIDATED for this MCP milestone only; gateway validation remains pending.
+D-014 governs the trusted supervised single-operator MCP MVP on
+existing `aks-agw-lab`, including the previously approved dedicated lab registry only.
+Gateway installation, public exposure, unrelated infrastructure and silent RBAC
+expansion remain outside scope; design approval is not runtime acceptance.
 
-- Candidate tools: `get_lab_overview`, `list_model_presets`, and `get_model_health`.
+- Exactly two argument-free tools: `get_lab_overview` includes static context and configured presets; `get_model_health` observes the fixed upstream. Results are ordinary dictionaries without output-model classes or runtime provenance/readiness metadata.
 - Start read-only, without shell execution or Kubernetes API access. A health check must not trigger inference or load a model; configured presets are not proof that models are loaded or healthy.
-- Prefer the FastMCP interface in the official `mcp` Python SDK for this small server. Distinguish it from the separately maintained `fastmcp` package; verify the chosen release's transport, protocol, security, and session support before implementation, then pin dependencies.
+- Use official `mcp` v1 FastMCP, initially targeting `mcp==1.30.0`, with the existing Python scaffold and a uv lockfile (D-012). This is an explicit maintenance-line choice, not the latest major: current v2 uses `MCPServer`. Verify the installed release; v1 source supports revisions through `2025-11-25`, not assumed `2026-07-28` support.
 - Use Streamable HTTP at `/mcp`, one replica on the CPU `app` pool, an internal ClusterIP Service, and separate application health endpoints.
-- Prefer stateless HTTP operation where the selected SDK and clients support it; verify discovery and invocation with MCP Inspector independently of model tool calling.
+- Use verified v1 `stateless_http=True` and `json_response=True`; acceptance requires a real HTTP SDK client initialize/list/call smoke test, independently of model tool calling. MCP Inspector is optional.
+- Overview/presets come from the unchanged shared JSON/ConfigMap shape, not live discovery. Health returns only `status`, `reason`, `http_status`. Healthy requires 200 plus object `status: ok`; loading requires 503 plus `status: loading model`. Other 4xx/5xx are unhealthy; malformed/mismatched expected bodies are unknown. Ignore unrelated JSON fields. One GET has a 3-second overall deadline, 16 KiB streamed cap, no compression/redirects/retries/environment proxies and normal HTTPS verification. No caller-selected target, inference or model administration is possible.
+- Local execution defaults to loopback; container binding is explicit. Narrow Host/Origin allowlists and SDK 64 KiB MCP cap remain. Small lifecycle/tool outcomes replace custom telemetry; dependency/access diagnostics are suppressed and Uvicorn proxy-header trust is off. No authentication, TLS, or NetworkPolicy isolation is claimed; broader access requires separate review (D-012).
+
+**Current MVP (D-014, VALIDATED; trusted supervised single-operator lab only):**
+
+- Last recorded AKS settings: `networkPlugin: azure`, `networkPluginMode: overlay`,
+  `networkDataplane: azure`, `networkPolicy: none`; refreshed before execution.
+  No cluster networking changes were made.
+- Deployed: dedicated `mcp` namespace, one CPU app-pool replica, ClusterIP HTTP,
+  operator API port-forward explicitly bound to localhost. Other pods CAN reach
+  MCP; outbound traffic is NOT network-restricted. Fixed application GET `/health`
+  is a tool constraint, not network isolation. Host/Origin checks authenticate
+  neither the operator nor pod callers; no application authentication/TLS exists.
+- Defer Cilium and NetworkPolicy enforcement for this trusted, supervised,
+  single-operator lab. No networking migration/reimage, ineffective policy objects,
+  gateway installation or public exposure. This supersedes the immediate D-013
+  isolation gate, not its history or future hardening designs.
+- Dedicated Basic ACR `acragwlabd18f2ff3` in southeastasia adds cost and is the
+  sole approved infrastructure expansion. Isolated `infra/registry.bicep` passed
+  compilation/server validation; reviewed what-if created only registry and scoped
+  assignment. Traditional `LegacyRegistryPermissions`, admin/anonymous disabled;
+  authenticated public registry endpoint, not application exposure. Existing
+  operator roles covered create/push and assignment. Only kubelet registry-scoped
+  `AcrPull` was added; no operator roles/admin passwords/pull secrets.
+  Published and actual pod imageID both equal
+  `acragwlabd18f2ff3.azurecr.io/lab-info@sha256:29f6d6d123c54cec36ca64c104ff55450de823a27b52d3a1db75cdfd8e320b76`.
+  One Ready replica ran on `aks-app-42647623-vmss000000`, zero restarts.
+  Every Kubernetes operation must explicitly
+  target `--context=aks-agw-lab`, without relying on the active context. Final
+  stored current-context differs from the earlier snapshot; see STATUS.
+- Independent Tester confirms runtime, exact deployed image/source, real SDK
+  initialize/list/both structured calls, health/probes, invalid Host/Origin
+  rejection and failure independence with the same offline image. Security review
+  permits only the trusted supervised scope; SDK reflection MEDIUM, unauthenticated
+  plaintext/unrestricted internal access and availability LOW remain accepted
+  only in this boundary, not fixed. Architect ACCEPT is based on these recorded
+  independent reports; no new runtime/cloud checks were performed for acceptance.
+  Exact permission, image, runtime and review contract:
+  [D-014](decisions.md#d-014-trusted-supervised-mcp-lab-mvp-human-approved-amendment-2026-10-23-planned).
+- Developer checks: actual pod x86_64, UID/GID 10001, read-only rootfs, no token,
+  zero effective capabilities, NoNewPrivs=1 and seccomp=2. Both probes 200.
+  Real SDK via localhost:18000 initialized 2025-11-25, listed/called both tools
+  with structured results and no session ID; live fixed health healthy/health_ok/200.
+  Local hardened image proved probe independence during upstream failure; live
+  upstream was not interrupted. Temporary port-forward closed after checks.
+  Curated overview revision 2026-10-22.1 remains static historical teaching data,
+  including its deployment disclaimer, not a runtime inventory.
+
+**Future hardening retained (D-013, both phases PLANNED/deferred):**
+
+Phase 1 denies ordinary MCP ingress, uses operator localhost API forwarding and
+allows egress only to required DNS and verified llama.cpp pods on TCP 8080.
+Phase 2 later adds only verified gateway namespace AND pod-selected ingress to
+TCP 8000, retaining other restrictions. Neither authorizes gateway installation.
+Before resuming, review supported enforcement/cluster impact, additive policies,
+selectors and independent allow/deny tests. NetworkPolicy is L3/L4, not `/health`
+filtering, authentication or TLS; DNS, node/kubelet and administrator exceptions
+remain. Revisit before sharing/untrusted workloads, wider access or integration.
+
+Implementation map: root `main.py`, curated `config/lab-info.json`, frozen
+`uv.lock`, `tests/test_lab_mcp.py`, `Dockerfile`, default-deny `.dockerignore`,
+and `k8s/mcp/lab-info.yaml`. Python dependency resolution is restricted to
+`https://packagefeedproxy.microsoft.io/pypi/simple`, including container uv
+bootstrap. The audited lock uses only that registry and its Microsoft-hosted
+artifact links; no public PyPI fallback is allowed. Installed `mcp==1.30.0`
+exposes the planned APIs and the real client negotiated `2025-11-25`.
+Plain `FastMCP` owns Streamable HTTP without `LabMCP`, `SafeHTTP`, custom envelope
+parsing/replay or correlation metadata. Custom probes explicitly call the SDK
+request validator; they do no upstream I/O. An unavailable upstream cannot
+disable static overview/probes. Extra arguments may be ignored by the SDK but
+cannot change the target/action. Unexpected application failures use constant
+`ToolError`; unknown names remain SDK errors without executing a tool.
+
+Known MEDIUM residual: SDK malformed-envelope/protocol errors and unknown tool
+names can reflect caller input. The old guard's response protection was removed
+intentionally for this supervised loopback lesson; log suppression is NOT
+equivalent protection. Tests characterize reflection instead of asserting the
+old guarantee. Localhost is not per-user authorization. Untrusted/shared access
+requires renewed security/exposure design. No agent/gateway tracing is enabled.
+Packaging uses the Python 3.12.15 base index digest
+`sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70`.
+Feed-provided uv 0.11.24 hashes are enforced; native BUILDPLATFORM frozen offline
+lock export avoids a reproduced AMD64 uv/QEMU crash. Target-platform pip installs
+only hash-verified runtime wheels from the approved feed. Actual AMD64 build/run
+and Kubernetes admission/runtime have independent Tester evidence in STATUS.
+Residual LOW limitation remains: inbound uploads have no deadline/concurrency
+bound. Neither
+whole-container provenance nor shared/customer exposure is accepted. Phase 8
+remains paused; independent D-011 router validation is still required before
+Phase 9 and is not supplied by this MCP milestone.
 
 **Binding versus exposure:** `0.0.0.0:8000` means the Python process accepts
 IPv4 connections on the pod's interfaces. It does not allocate a public IP.

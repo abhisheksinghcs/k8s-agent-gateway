@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-info
+  namespace: mcp
+data:
+  lab-info.json: |
+    {
+      "overview": {
+        "revision": "2026-10-22.1",
+        "source": "docs/architecture.md; docs/decisions.md D-012",
+        "purpose": "Reproducible AKS lab for learning GPU-backed model serving and agent infrastructure.",
+        "components": {
+          "agentgateway": "Intended CPU application-pool proxy; implementation paused.",
+          "llama.cpp": "GPU-backed model router with persisted GGUF cache.",
+          "lab-info": "Read-only curated information and bounded router health observation."
+        },
+        "intended_request_path": ["client / agent", "agentgateway", "llama.cpp", "NVIDIA GPU"],
+        "limitations": [
+          "This is versioned configuration, not live deployment discovery.",
+          "Gateway integration and this MCP server's cluster deployment are not established.",
+          "Spot GPU capacity can be evicted; router health does not establish per-model readiness.",
+          "Trusted lab only: no application authentication, TLS, or network isolation is provided."
+        ]
+      },
+      "presets": {
+        "revision": "2026-10-22.1",
+        "source": "k8s/llm/llama-cpp.yaml: ConfigMap llama-models-preset",
+        "models": [
+          {"id": "qwen2.5-7b-instruct", "repository": "bartowski/Qwen2.5-7B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "General instruction model."},
+          {"id": "qwen2.5-coder-7b-instruct", "repository": "bartowski/Qwen2.5-Coder-7B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "Code-focused instruction model."},
+          {"id": "llama-3.1-8b-instruct", "repository": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "General instruction model; Llama community license applies."},
+          {"id": "phi-4", "repository": "bartowski/phi-4-GGUF", "quantization": "Q4_K_M", "description": "Phi instruction model."}
+        ]
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-info
+  namespace: mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab-info
+  template:
+    metadata:
+      labels:
+        app: lab-info
+    spec:
+      nodeSelector:
+        workload: app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: lab-info
+          image: acragwlabd18f2ff3.azurecr.io/lab-info@sha256:29f6d6d123c54cec36ca64c104ff55450de823a27b52d3a1db75cdfd8e320b76
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LAB_HOST
+              value: "0.0.0.0"
+            - name: LAB_CONFIG
+              value: /app/config/lab-info.json
+            - name: LAB_HEALTH_URL
+              value: http://llama-cpp.llm.svc.cluster.local:8080/health
+            - name: LAB_ALLOWED_HOSTS
+              value: "127.0.0.1:8000,localhost:8000,127.0.0.1:18000,localhost:18000,lab-info.mcp.svc.cluster.local,lab-info.mcp.svc.cluster.local:80"
+            - name: LAB_ALLOWED_ORIGINS
+              value: "http://127.0.0.1:8000,http://localhost:8000,http://127.0.0.1:18000,http://localhost:18000,http://lab-info.mcp.svc.cluster.local,http://lab-info.mcp.svc.cluster.local:80"
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost:8000
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost:8000
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: lab-info
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-info
+  namespace: mcp
+spec:
+  type: ClusterIP
+  selector:
+    app: lab-info
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

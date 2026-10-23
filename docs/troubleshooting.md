@@ -2,6 +2,31 @@
 
 Entries are observation, hypothesis, test, result.
 
+## AMD64 uv crashes under local QEMU (D-014 execution, 2026-10-23)
+
+- Observation: synchronous `docker buildx build --platform linux/amd64 --load
+	--tag lab-info:d014 .` failed with exit 139 after hash-verified uv 0.11.24
+	bootstrap from the approved feed. No dependency-feed/network failure occurred.
+- Hypothesis: uv binary emulation failure, not application or dependency failure.
+- Test: disposable AMD64 pinned Python container ran `uname -m` and Python
+	3.12.15 successfully, then the same verified uv wheel's `uv --version` crashed
+	with QEMU signal 11. Container was automatically removed.
+- Result: use native BUILDPLATFORM stage only for offline frozen hash-preserving
+	lock export; target AMD64 Python/pip enforces hashes and wheel-only installs.
+	Synchronous rebuild succeeded; full source suite 63 PASS. Actual hardened
+	AMD64 container and deployed AKS pod ran both tools through the real SDK.
+	Do not infer AMD64 application support from Python alone, or retry the same
+	crashing uv path without new evidence.
+
+## Local smoke-test port conflict (D-014 execution, 2026-10-23)
+
+- Observation: host port 8000 returned 405 for MCP and 404 for probes while the
+  container-local probe passed. An unrelated existing Python process owned 8000.
+- Test/result: leave that process untouched, publish only localhost:18000 and
+  explicitly allow its Host/Origin. One initial forwarding disconnect was followed
+  by successful container-local and host SDK checks. AKS localhost:18000 forwarding
+  later passed both tools and probes; all session-owned listeners were removed.
+
 ## T-001 GPU family quota is 0 (blocker, 2026-10-19)
 
 - Observation: `az vm list-usage -l westus2|southeastasia` shows `StandardNCdsRTXPRO6000BSEv6XLFamily` limit 0. `az vm list-skus` reports no restrictions, so availability is not the problem; quota is.
@@ -51,3 +76,15 @@ Entries are observation, hypothesis, test, result.
 
 - Observation: during Phase 0, commands run in a shell that had a background job returned no output or exit code 130.
 - Workaround: run long Azure CLI queries in a fresh terminal and redirect output to a file, then read the file.
+
+## T-009 Python MCP dependency source and SDK error reflection (2026-10-22)
+
+- Observation: an earlier implementation attempt failed against the public artifact host before source implementation. The human subsequently prohibited public PyPI and approved only `https://packagefeedproxy.microsoft.io/pypi/simple`. Do not retry the historical public-host commands.
+- Test/result: exact `mcp==1.30.0` resolved and installed from the approved feed with frozen uv dependencies. The lock audit found 37 approved-registry entries and 177 feed-provided Microsoft artifact URLs. No authentication secret was needed; if future feed access requires one, tell the coordinator without requesting it through the model. Docker remains blocked by its unavailable local daemon, not by Python dependencies.
+- Observation: adversarial HTTP tests initially produced 20 passes/1 failure because the SDK reflected an unsupported `MCP-Protocol-Version` value in an error. Hypothesis: reject that header before SDK handling, leaving ordinary MCP processing to the SDK.
+- Result: `SafeHTTP` now returns a constant unsupported-revision error. The rerun passed 21/21 at that stage; later tests extend packaging and deadline coverage. Run `.venv/bin/python -m pytest -q tests/test_lab_mcp.py` for current evidence. SDK/dependency/access log streams are silenced, while safe application lifecycle records are retained. This is Developer evidence, not independent security acceptance.
+- Independent review follow-up: malformed JSON-RPC envelopes still reflected Pydantic `input_value` in SDK HTTP 400 responses; application logs were clean. Installed `mcp==1.30.0` transport source uses `json.loads` then `JSONRPCMessage.model_validate`, returning codes `-32700` (parse) and `-32602` (envelope validation), with ID `server-error`.
+- Repair: prevalidate only `/mcp` POST envelopes behind the SDK's `RequestBodyLimitMiddleware(65536)`, using the same SDK model. Return constant errors for parse/encoding/recursion and envelope validation failures; replay accepted bytes unchanged. Do not rewrite ordinary JSON-RPC errors or buffer responses. Preserve SDK-accepted notifications/responses, including its permissive union behavior. Allowlisted telemetry also checks that a method is a string, since accepted response extras can contain non-string methods.
+- Regression evidence: the initial new HTTP cases produced 10 failures/4 passes (including one incorrectly assumed invalid ID that the SDK accepts as a notification); the repaired focused run passed 16 checks. Additional compatibility checks passed 12/12, including real SSE SDK calls, 202/empty notification and response acknowledgements, exact 64 KiB acceptance, declared/chunked overflow 413, and SDK 400/406/415 header errors. Every malformed-envelope/parse case asserts no sentinel in HTTP output, application logs, or captured stdout/stderr. Non-JSON Content-Type is rejected by SDK transport security with 400 before its inner 415 check.
+- Reproduce without installing: `PYTHONPATH=. .venv/bin/pytest -q` -> **52 passed in 13.26s**. Direct pytest needs `PYTHONPATH=.` for this repository (the documented `python -m pytest` invocation supplies the import path itself). Local listener shutdown assertions passed. Inbound upload deadlines/concurrency and mutable base/unhashed uv bootstrap remain separate exposure/container gates. Independent retest/security review and Architect acceptance remain required.
+- Final telemetry follow-up: two exception-propagating ASGI regressions reproduced a post-response `RecursionError` at `json.loads(captured)` for 12,000 nested arrays, both top-level and inside `params`, below 64 KiB. Catching `RecursionError` in that telemetry-only handler preserves the constant 400/code `-32700` and emits correlated `http_complete` metadata (`method=other`, `status=400`), without changing the SDK envelope boundary. `PYTHONPATH=. .venv/bin/pytest -q tests/test_lab_mcp.py -k deep_nested_json_completes_asgi` -> **2 failed before / 2 passed after**; `PYTHONPATH=. .venv/bin/pytest -q` -> **54 passed in 13.12s**, including listener cleanup assertions. Developer local repair evidence only, not independent acceptance; no dependencies installed or external network/cloud operations performed.

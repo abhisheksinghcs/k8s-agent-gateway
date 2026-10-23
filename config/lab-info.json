@@ -1,0 +1,29 @@
+{
+  "overview": {
+    "revision": "2026-10-22.1",
+    "source": "docs/architecture.md; docs/decisions.md D-012",
+    "purpose": "Reproducible AKS lab for learning GPU-backed model serving and agent infrastructure.",
+    "components": {
+      "agentgateway": "Intended CPU application-pool proxy; implementation paused.",
+      "llama.cpp": "GPU-backed model router with persisted GGUF cache.",
+      "lab-info": "Read-only curated information and bounded router health observation."
+    },
+    "intended_request_path": ["client / agent", "agentgateway", "llama.cpp", "NVIDIA GPU"],
+    "limitations": [
+      "This is versioned configuration, not live deployment discovery.",
+      "Gateway integration and this MCP server's cluster deployment are not established.",
+      "Spot GPU capacity can be evicted; router health does not establish per-model readiness.",
+      "Trusted lab only: no application authentication, TLS, or network isolation is provided."
+    ]
+  },
+  "presets": {
+    "revision": "2026-10-22.1",
+    "source": "k8s/llm/llama-cpp.yaml: ConfigMap llama-models-preset",
+    "models": [
+      {"id": "qwen2.5-7b-instruct", "repository": "bartowski/Qwen2.5-7B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "General instruction model."},
+      {"id": "qwen2.5-coder-7b-instruct", "repository": "bartowski/Qwen2.5-Coder-7B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "Code-focused instruction model."},
+      {"id": "llama-3.1-8b-instruct", "repository": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF", "quantization": "Q4_K_M", "description": "General instruction model; Llama community license applies."},
+      {"id": "phi-4", "repository": "bartowski/phi-4-GGUF", "quantization": "Q4_K_M", "description": "Phi instruction model."}
+    ]
+  }
+}

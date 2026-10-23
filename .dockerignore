@@ -1,0 +1,7 @@
+**
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!main.py
+!config/
+!config/lab-info.json

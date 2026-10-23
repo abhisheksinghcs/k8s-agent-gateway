@@ -260,6 +260,43 @@ Do not introduce abstraction simply because it might be useful someday.
 Build what the project currently needs while leaving reasonable
 extension points.
 
+## Workload And Contract-Oriented Code Comments
+
+All newly generated or substantially modified code MUST include copious,
+meaningful comments so a reader familiar with the language but unfamiliar
+with this workload can understand what we built, how it is structured, and why.
+This applies to application code, tests, scripts,
+infrastructure definitions, and configuration wherever comments are supported.
+
+- Begin each generated code file with its purpose, responsibilities, and a
+	short reading map or execution-flow explanation.
+- Explain each class/function and major logical block in workload terms:
+	why it exists, which layer owns it, its inputs/outputs, and who consumes them.
+	Use docstrings where appropriate.
+- Explain configuration as deployment contracts: who controls each setting,
+	why the default was chosen, what it connects to, and which values must agree
+	across local execution, containers, Services, probes, and external dependencies.
+- Explain API/schema contracts, invariants, trust boundaries, side effects,
+	failure semantics, and the division between application policy and SDK behavior.
+- Explain why validation, security controls, timeouts, limits, error handling,
+	and operational tradeoffs exist; distinguish configuration from observations.
+- Explain important units, defaults, external dependencies, and side effects.
+	State what the code does NOT prove when readers might otherwise overinterpret it.
+- Comment tests with the scenario, expected outcome, and regression they protect.
+- Assume working familiarity with the implementation language. Do not turn
+	comments into lessons on basic syntax, types, environment variables, or libraries.
+	Explain unusual mechanics only when necessary to understand a workload contract.
+- Prefer generous design context and rationale over narrating assignments or
+	syntax. Keep comments accurate as code changes; distinguish current behavior
+	from proposed deployment or integration.
+- Never include secrets or sensitive runtime values in explanatory examples.
+
+Do not invent comment syntax for formats that forbid it (for example, JSON).
+Put the equivalent explanation in an adjacent README or the owning code instead.
+Existing untouched files need not be rewritten merely to meet this standard;
+apply it to future generated code and the portions being substantially changed.
+Documentation-only comment passes must preserve behavior and be validated.
+
 ---
 
 # 10. Prefer Small, Reversible Changes
