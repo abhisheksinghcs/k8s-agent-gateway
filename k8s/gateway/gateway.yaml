@@ -1,0 +1,69 @@
+# D-015 data path: localhost API forward -> proxy :8080 -> exact /mcp ->
+# one static StreamableHTTP server at lab-info.mcp.svc.cluster.local:80/mcp.
+# Reading map: Gateway/listener -> backend/tool contract -> route attachment.
+# No model, catch-all, health/admin route, dynamic destination or public Service.
+# GatewayClass agentgateway is created by the official controller using
+# controllerName agentgateway.dev/agentgateway; do not claim an unrelated class.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: agentgateway-proxy
+  namespace: agentgateway-system
+spec:
+  gatewayClassName: agentgateway
+  infrastructure:
+    # parameters.yaml must exist before this reference can reconcile. It owns
+    # ClusterIP, placement and hardening; listener port and port-forward agree.
+    parametersRef:
+      group: agentgateway.dev
+      kind: AgentgatewayParameters
+      name: lab-internal
+  listeners:
+    - name: mcp
+      protocol: HTTP
+      port: 8080
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: lab-info
+  namespace: agentgateway-system
+spec:
+  mcp:
+    # The upstream is FastMCP stateless HTTP. Never keeps the exact argument-free
+    # get_lab_overview/get_model_health names rather than prefixing the target.
+    # Upstream health failures are tool observations, not MCP discovery failure.
+    sessionRouting: Stateless
+    prefixMode: Never
+    targets:
+      - name: lab-info
+        static:
+          # A DNS target, not a cross-namespace Kubernetes backendRef: no
+          # ReferenceGrant. DNS selection is not network authorization. This
+          # upstream authority already appears in MCP's narrow Host allowlist.
+          host: lab-info.mcp.svc.cluster.local
+          port: 80
+          path: /mcp
+          protocol: StreamableHTTP
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: lab-info-mcp
+  namespace: agentgateway-system
+spec:
+  parentRefs:
+    - name: agentgateway-proxy
+      sectionName: mcp
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /mcp
+      backendRefs:
+        - group: agentgateway.dev
+          kind: AgentgatewayBackend
+          name: lab-info

@@ -1,0 +1,72 @@
+# D-015 controller contract, consumed by the official v1.6.0 Helm chart.
+# Reading map: CPU placement/hardening -> Kubernetes authority -> xDS -> discovery.
+# This controller reconciles the proxy; it does not serve MCP tools or inference.
+# Its required API credentials are NOT the token-free lab-info workload's policy.
+nodeSelector:
+  workload: app
+tolerations: []
+# These are chart-level keys, not controller.nodeSelector/resources. They bound
+# one CPU controller without changing pools or tolerating GPU/Spot-only nodes.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+# Disable optional controller scraping annotations as well as monitoring CRs
+# below. Proxy default access logs contain request/tool metadata; this file
+# does not configure body/header/prompt logging or deploy a monitoring stack.
+podAnnotations:
+  prometheus.io/scrape: "false"
+rbac:
+  # Limits provisioner WRITES only. Cluster-wide Secret reads, discovery,
+  # TokenReview and GatewayClass authority remain: reviewed HIGH, human accepted
+  # in D-015. This is not namespace-isolated RBAC or an Azure IAM assignment.
+  gatewayNamespaces: [agentgateway-system]
+controller:
+  replicaCount: 1
+  logLevel: info
+  image:
+    # The v1.6.0 chart concatenates repository:tag and preserves this v-prefixed
+    # tag verbatim. OCI tag@digest pins the multi-platform release index; AKS
+    # selects its AMD64 child. The digest is not the Helm chart digest.
+    tag: v1.6.0@sha256:d84259a7e2d87f8f39bae385d4b032d823c0a4450aecb32e0e31e2258449645b
+  service:
+    type: ClusterIP
+  xds:
+    # The controller manages its certificate Secret. Generated proxies use a
+    # dedicated projected audience token + CA to authenticate TLS xDS on 9978.
+    # Do not disable required credentials or substitute plaintext on failure.
+    mode: tls
+# Explicit names must agree with Gateway.spec.gatewayClassName in gateway.yaml.
+gatewayClassName: agentgateway
+controllerName: agentgateway.dev/agentgateway
+discoveryNamespaceSelectors:
+  # Discovery selection is NOT a restriction on the RBAC reads accepted above.
+  - matchLabels:
+      kubernetes.io/metadata.name: agentgateway-system
+  - matchLabels:
+      kubernetes.io/metadata.name: mcp
+# This experiment has one static MCP backend, not models, mesh or monitoring.
+istio:
+  enabled: false
+  autoEnabled: false
+inferenceExtension:
+  enabled: false
+agentgatewayModels:
+  enabled: false
+xBackend:
+  enabled: false
+monitoring:
+  enabled: false

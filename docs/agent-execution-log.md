@@ -2,6 +2,188 @@
 
 Every delegation to a custom agent (`.github/copilot-instructions.md`, "Agent execution transparency"). Entries 1-3 were written after the fact on 2026-10-20 because the log was not created when those agents ran; they are reconstructed from each agent's final report. Nothing is listed here that was not actually invoked.
 
+## D-011 Final Gate Acceptance (2026-10-27)
+
+### Agent execution
+Agent: architect
+Date: 2026-10-27
+Why selected: required final acceptance after authorized hardening, independent Tester validation and independent Security Reviewer GO.
+Task: evaluate resolved explicit-offload/runtime/security gates, preserve provenance limits and reconcile the publication handoff without authorizing model routing.
+Files inspected: governing/architect instructions, STATUS.md, README.md, docs/architecture.md, docs/decisions.md, docs/troubleshooting.md, coordinator execution records, llama.cpp manifest and relevant tests; Git status/history.
+Files modified: STATUS.md, docs/architecture.md, docs/decisions.md and README.md only.
+Commands/tests: scoped documentation diff checks, consistency/safety scans and final editor diagnostics PASS. No runtime tests rerun; acceptance uses recorded independent evidence.
+Result: bounded ACCEPT; D-011 model prerequisite cleared. Historical alias/port-correlated CUDA initialization and 29/29,29/29,33/33,41/41 offload plus ReplicaSet/events provenance satisfy the explicit diagnostic gate with stated limits, not fresh final-pod startup or tamper-proof evidence. Final four HTTP 200/exact 42/positive usage, health/discovery/LRU, non-root/RuntimeDefault runtime, nine gates PASS and 66 tests PASS/2 opt-in skips support acceptance. Root/no-seccomp remediation accepted; Security Reviewer GO and explicit human residual disposition clear the bounded security gate.
+Limits/handoff: HIGH router access/admin abuse and controller Secret reads remain accepted, not fixed; logging confidentiality/retention unverified. Trusted supervised single operator, trusted workloads/local users, synthetic/public data only; expires before sharing, untrusted users/workloads, wider exposure or target change. No new write/download/full-hash/recovery/throughput/wider-access claim. Phases 9/10 PLANNED; no model route authorized or implemented, D-015 live outage remains deferred. Future separately authorized exact-release route design must prove fixed upstream, narrow inference paths/no admin catch-all and independent gateway validation.
+Execution boundary: documentation/recorded evidence only, dirty work preserved; no runtime/cloud/workload/PVC/network mutation, nested delegation, installs, builds, stage/commit/push or execution-log edit by delegate.
+Artifacts: final current acceptance in STATUS.md, architecture, decisions and README; coordinator owns execution record and reviewed publication.
+
+## D-011 Gate Resolution Implementation And Validation (2026-10-27)
+
+### Agent execution
+Agent: developer
+Date: 2026-10-27
+Why selected: implement bounded diagnostic and hardening after explicit human approval of interruption, narrow volume permissions and lab access risks.
+Task: deploy compatible non-root/RuntimeDefault hardening, collect explicit per-model CUDA/offload proof with temporary verbosity 4, restore normal logging and preserve weights.
+Files inspected: governing/developer instructions, STATUS.md, README.md, architecture/decisions/troubleshooting, llama.cpp manifest, existing tests, relevant skills and pinned sources.
+Files modified: k8s/llm/llama-cpp.yaml, STATUS.md, README.md, docs/architecture.md, docs/decisions.md, docs/troubleshooting.md.
+Commands/tests: manifest/server dry-runs, three Recreate rollouts, sequential synthetic direct inference, runtime/worker/cache inventory/GPU checks; focused drift test 1 PASS, git diff --check PASS.
+Result: DEPLOYED with Developer evidence only. Final llama-cpp-5f676cf74f-vzjtv Ready/zero restarts, same pinned build 11749/1d88cb05f; UID/GID 10001, RuntimeDefault/Seccomp 2, all capabilities zero, NoNewPrivs 1, token absent. Supported fsGroup 10001 handled cache permissions without root initializer/manual repair/world-write. Inventories matched paths/sizes/symlinks, not full-content hashes. Diagnostic actual initialization plus offloaded layers: Qwen 29/29, coder 29/29, Llama 33/33, Phi 41/41; each diagnostic and final request HTTP 200/exact 42/positive usage. Normal verbosity 3 restored. Readiness watches 20-31 seconds per rollout, not measured endpoint downtime.
+Cleanup/boundary: owned clients/forward stopped; private restricted diagnostic captures retained for independent review. No model route, capacity change, nested delegation, commit or push. Existing dirty tree preserved; coordinator execution log untouched by delegate.
+Artifacts: reproducible manifest hardening, explicit human decisions/risk expiry and diagnostic evidence in documentation. Independent validation/security/architecture pending at handoff.
+
+### Agent execution
+Agent: tester
+Date: 2026-10-27
+Why selected: independently validate deployed hardening and diagnostic evidence rather than rely on Developer reports.
+Task: verify final runtime/cache/configuration, all-four direct inference and retained historical CUDA/offload evidence without workload changes.
+Files inspected: governing/tester instructions, STATUS.md, architecture/decisions, README.md, llama.cpp manifest, tests and private diagnostic evidence; inspection inventory recorded in STATUS.md.
+Files modified: STATUS.md and docs/troubleshooting.md only.
+Commands/tests: explicit-context metadata/runtime/cache checks, owned localhost-forwarded health/discovery/all-four arithmetic requests, historical alias/repository/port/CUDA/count correlation and ReplicaSet/events provenance; 66 tests PASS, 2 live-gateway opt-ins SKIPPED; scoped diff/diagnostics PASS.
+Result: nine scoped validation gates PASS. Final router/workers UID/GID 10001/Seccomp 2/all caps zero/NoNewPrivs 1/token absent, Ready/zero restarts. Four HTTP 200/exact 42 results with usage 3/3/2/2; ordinary max-three/LRU preserved. Retained diagnostic ports 40649/33453/36313/41137 correlate Qwen/coder/Llama/Phi initialization and 29/29,29/29,33/33,41/41 offload. Diagnostic pod deleted; historical logs are not fresh final-pod startup logs. Cache inventory unchanged and permission checks pass; actual new write/download/full hashes/recovery untested.
+Cleanup/boundary: owned forward closed, clients completed, restricted private captures retained. No workload changes, installs, nested delegation, commit/push or execution-log edits.
+Artifacts: independent post-hardening results and diagnostic provenance caveats in STATUS.md/troubleshooting. Architectural acceptance remains pending; no model route authorized.
+
+### Agent execution
+Agent: security-reviewer
+Date: 2026-10-27
+Why selected: independently assess admitted hardening, explicit human risk disposition, logging and public-repository safety before acceptance/publication.
+Task: review final runtime and all pending publication inputs without modifying workloads or accepting risks on behalf of the operator.
+Files inspected: governing/security instructions, STATUS.md, README.md, all four docs, registry/llama/gateway inputs, tests, pyproject.toml and ignore files; targeted restricted diagnostic/Tester artifacts.
+Files modified: STATUS.md only.
+Commands/tests: explicit-context read-only get/exec/logs, runtime/cache checks, historical evidence checks, Git/Node safety scans of 12 pending tracked/untracked files, diff/STATUS diagnostics PASS. No Python suite/inference rerun; observed Tester 66 PASS/2 skips retained.
+Result: GO for continued bounded trusted-router use; security prerequisite for separately authorized future private-route design cleared. Root/no-seccomp MEDIUM remediated in observed router/resident workers. Router unauthenticated/unisolated administration HIGH and controller Secret-read HIGH remain explicitly accepted, not fixed. Normal logging confidentiality MEDIUM/collector retention unverified remain; no selected credential/body markers observed. No new scoped blocker, no wider access/route support or implementation authorization.
+Public safety: all 12 pending files scanned with no credential/private-content finding or raw diagnostic artifact; registry change newline-only. Index empty during review, so coordinator must stage explicit reviewed paths and rerun staged safety checks before publication.
+Cleanup/boundary: no workload changes, installs, forwards, nested delegation, stage/commit/push or execution-log edit. Historical diagnostic provenance, actual write/download/full hashes/recovery remain bounded/unverified; private captures preserved for Architect.
+Artifacts: independent runtime security disposition in STATUS.md. Architect acceptance next.
+
+## D-011 Gate Resolution Reviews (2026-10-27)
+
+### Agent execution
+Agent: tester
+Date: 2026-10-27
+Why selected: independently investigate missing explicit CUDA initialization and layer-offload evidence before implementation changes.
+Task: inspect retained logs and pinned-release logging behavior without restarting or reconfiguring workloads.
+Files inspected: tester profile, constitution, STATUS.md, architecture, decisions, README.md, llama.cpp manifest, troubleshooting; live args/presets/environment and pinned upstream logging/router/CUDA source.
+Files modified: STATUS.md and docs/troubleshooting.md.
+Commands/tests: explicit-context existing-pod metadata/log reads, full retained log inspection, pinned executable version and upstream source inspection; focused git diff --check PASS and documentation diagnostics clean.
+Result: explicit offload gate remains unsatisfied. Earlier tested pod no longer exists; replacement llama-cpp-74c6bc49b5-6pvtb retained 17 log lines without CUDA/offload matches. Build 11749/commit 1d88cb05f emits required backend INFO at verbosity 4 while deployed default is 3; router child stderr forwarding is active. Minimal proposed diagnostic: separately authorized Recreate with temporary verbosity 4, then bounded sequential synthetic inference for each preset and actual initialization/layer-count capture.
+Cleanup/boundary: no inference clients or forwards created; no workload changes, installs, nested delegation, commit or push. Existing dirty tree preserved; coordinator execution log untouched by delegate.
+Artifacts: logging cause, authoritative source references and smallest diagnostic handoff in STATUS.md and troubleshooting.
+
+### Agent execution
+Agent: security-reviewer
+Date: 2026-10-27
+Why selected: independently assess router runtime/exposure risks and diagnostic confidentiality before resolving model-routing gates.
+Task: identify minimum hardening, human risk disposition and safe offload-diagnostic contract; review pending changes for public-repository safety.
+Files inspected: governing/profile documents, STATUS.md, README.md, architecture/decisions, llama manifest, three gateway inputs/tests, scoped pending diffs, pinned source and cached-image metadata.
+Files modified: STATUS.md only.
+Commands/tests: explicit-context read-only Kubernetes observations, pinned-source/cached-image inspection, Git diff/history and credential-pattern scan; scoped documentation checks PASS. No credential candidates in 1305 added lines plus four untracked inputs; not full-history certification.
+Result: NO-GO for new model routing; conditional GO for separately authorized synthetic diagnostic. HIGH unauthenticated/unisolated model administration requires controls or explicit bounded human risk acceptance. MEDIUM root/no seccomp requires compatibility-tested hardening; UID-only change breaks root-owned 0700 cache access. MEDIUM verbosity-4 confidentiality risk includes metadata, configured API-key suffix and warning-path generated output; level 5 body/token logging must remain disabled.
+Handoff: authorize Recreate and any necessary PVC permission changes; validate non-root/device/cache/worker access and RuntimeDefault without silent fallback. Diagnostic uses public arithmetic only, reviewed private startup excerpts, restores verbosity 3. Routing separately requires supported fixed upstream/narrow inference paths, no admin/catch-all and independent validation. Human must explicitly dispose new-route plaintext/unrestricted-reachability/admin-abuse risks or approve a separate controls design. No risk accepted by reviewer.
+Execution boundary: no workload changes, inference/forwards, installs, nested delegation, commit or push. Existing dirty tree preserved; coordinator execution log untouched by delegate.
+
+## D-011 Bounded Architectural Acceptance (2026-10-27)
+
+### Agent execution
+Agent: architect
+Date: 2026-10-27
+Why selected: required architectural acceptance after independent direct-router validation; human requested the next step.
+Task: assess recorded D-011 evidence, preserve unverified gates and reconcile current documentation without model-route implementation.
+Files inspected: repository instructions, .github/agents/architect.agent.md, PROJECT_CONSTITUTION.md, STATUS.md, docs/architecture.md, docs/decisions.md, README.md, docs/agent-execution-log.md, k8s/llm/llama-cpp.yaml.
+Files modified: STATUS.md, docs/architecture.md, docs/decisions.md and README.md only. Coordinator added this execution record separately.
+Commands/tests: Git status/history; git diff --check -- STATUS.md docs/architecture.md docs/decisions.md README.md PASS after both edits; documentation diagnostics clean. No runtime tests rerun.
+Result: bounded ACCEPT of demonstrated four-preset direct inference, normal max-three/LRU behavior and correlated GPU-backed execution for unchanged trusted supervised lab use. Explicit CUDA initialization/offloaded-layer evidence remains unsatisfied; exact counts/full offload unverified. Full D-011 model-routing prerequisite clearance NOT ACCEPTED.
+Security/limits: root runtime, absent seccomp and unauthenticated/unisolated HTTP remain unresolved. No new security acceptance granted; separate review/disposition blocks model-route work, not recording unchanged trusted-lab behavior. Phases 9/10 remain PLANNED; D-015 remains CPU/MCP-only with live gateway outage validation deferred.
+Artifacts: bounded verdict and remaining gates in current status, architecture, decisions and README. Next: resolve offload evidence and applicable supported-release design/security gates before separately authorized Developer route work.
+Execution boundary: documentation/recorded evidence only; no nested delegation, runtime/cloud requests, infrastructure/workload/PVC mutation, installs, builds, deployment, commit or push. Existing dirty changes preserved; coordinator execution log untouched by delegate.
+
+## Independent D-011 Router Validation (2026-10-27)
+
+### Agent execution
+Agent: tester
+Date: 2026-10-27
+Why selected: human requested independent testing after current GPU/workload readiness was observed; D-011 requires independent direct inference evidence before model routing.
+Task: validate the existing router's four approved presets, GPU execution and normal max-three loading behavior without deployment or capacity changes.
+Files inspected: .github/agents/tester.agent.md, PROJECT_CONSTITUTION.md, STATUS.md, docs/architecture.md, docs/decisions.md, README.md, k8s/llm/llama-cpp.yaml, docs/troubleshooting.md.
+Files modified: STATUS.md and docs/troubleshooting.md only. Coordinator added this execution record separately.
+Commands/tests: explicit-context node/pod/configuration/Service/EndpointSlice reads; owned localhost-only port-forward on 18080; curl health/discovery and bounded /v1/chat/completions requests for each preset; existing-pod nvidia-smi, bounded logs and read-only worker /proc inspection. Scoped git diff --check PASS.
+Result: independent direct-router behavior PASS. All four presets returned HTTP 200 and exact answer 42 with positive completion tokens (Qwen/coder 3 each, Llama/Phi 2 each). Captured warm request times were 0.870104/0.766674/0.836498/0.825445 seconds respectively, not cold-load benchmarks. Health before/after returned 200/status ok. Discovery contained four approved preset IDs plus four cache IDs; preset equality passed, not total-list equality. Normal fourth-model loading logged idle-LRU Qwen eviction and retained three loaded presets. GPU tables showed llama-server compute workers; final coder/Llama/Phi allocations were 5398/6190/10738 MiB, correlated to aliases and mapped CUDA libraries.
+Limits: exact CUDA offloaded-layer counts absent from inspected logs and unverified. Structured NVIDIA PID query lacked permission; ordinary tables and read-only /proc worked without escalation. Terminal capture failures required state checks and warm repeats; no 600-second timeout observed. Root execution, absent runtime seccomp and unauthenticated/unisolated HTTP remain residuals, not accepted or remediated. No architectural acceptance, gateway inference, model tool calling or agent-loop claim; Phases 9/10 remain PLANNED.
+Cleanup: owned forward PID 63839 stopped and port 18080 verified free; no remaining matching client/forward. No workload/capacity/PVC changes, installs, build/push, commit/push or nested delegation. Existing dirty tree preserved.
+Artifacts: fresh independent evidence in STATUS.md; reusable discovery/GPU diagnostic caveats in docs/troubleshooting.md. Next: Architect acceptance before any gateway model route.
+
+## CPU-only gateway implementation (2026-10-23)
+
+### Agent execution
+Agent: architect
+Date: 2026-10-23
+Why selected: mandatory design and phase sequencing for resumed gateway implementation with GPU inference unavailable.
+Task: establish an official-supported, CPU-only internal gateway/MCP scope without weakening D-014 or bypassing independent D-011 inference acceptance.
+Files inspected: governing repository documents, architect profile, STATUS.md, docs/architecture.md and relevant decisions; official agentgateway installation/API/customization documentation and exact v1.6.0 chart values/rendered resources.
+Files modified: docs/decisions.md, docs/architecture.md, STATUS.md. Coordinator's README inference guide preserved.
+Commands/tests: helm show values and corrected offline helm template of v1.6.0; scoped git diff --check and documentation diagnostics PASS. No cluster mutations or deployment.
+Result: supported CPU-only path documented in D-015, with model routing deferred. Deployment BLOCKED pending independent security review and explicit human disposition of the controller's cluster-wide Secret-read RBAC. Namespace-scoped writes/discovery selectors do not remove that authority. All runtime acceptance gates remain pending.
+Artifacts: D-015 bounded implementation/credential/acceptance contract and refreshed handoff.
+
+### Agent execution
+Agent: security-reviewer
+Date: 2026-10-23
+Why selected: independent review of the new controller credential/RBAC boundary before installation.
+Task: inspect exact v1.6.0 chart authority and supported narrowing without changing the cluster or reading Secret values.
+Files inspected: PROJECT_CONSTITUTION.md, STATUS.md, docs/architecture.md, docs/decisions.md, security-reviewer profile, k8s/mcp/lab-info.yaml, main.py, README.md; official chart/source and xDS templates.
+Files modified: none.
+Commands/tests: Git status/history/HEAD; exact helm show values and offline controller/CRD helm template with explicit kube-context; public-source curl reads. Chart/source checks succeeded. No cluster operations, Secret reads, tests, builds or deployment.
+Result: conditional GO for offline implementation; installation initially NO-GO pending explicit human disposition. HIGH: cluster-wide Secret-content reads and other control-plane authority; no supported chart switch removes these reads. MEDIUM: unauthenticated plaintext application traffic remains limited to trusted supervised use. Verified projected proxy token design (audience agentgateway, requested 43200-second lifetime), not live behavior. Runtime and concrete implementation review remain required.
+Human disposition: the operator subsequently selected "Accept reviewed permissions and deploy" in the explicit permission question. This accepts the reviewed controller RBAC for this lab only, not wider exposure or a finding resolution. D-015 records the authorization.
+Artifacts: preinstallation permission assessment and recorded human acceptance; no runtime security certification.
+
+### Agent execution
+Agent: developer
+Date: 2026-10-23
+Why selected: mandatory implementation/deployment after D-015 design and explicit human RBAC acceptance.
+Task: create annotated, exact-release configuration and tests; deploy only the internal CPU-only gateway/MCP path and preserve direct MCP operation.
+Files inspected: repository/developer governance, constitution, D-015, STATUS.md, architecture, existing MCP manifest/tests and exact v1.6.0 chart/CRD/helper sources.
+Files modified: k8s/gateway/controller-values.yaml, k8s/gateway/parameters.yaml, k8s/gateway/gateway.yaml, tests/test_gateway.py, README.md, STATUS.md, docs/architecture.md, docs/troubleshooting.md. Coordinator-owned execution log untouched by agent.
+Commands/tests: offline Helm renders, server dry-runs, apply/install, rollouts/current-generation conditions, explicit-context read-only runtime inspection and official SDK localhost-forwarded calls. GATEWAY_TEST_URL=http://127.0.0.1:18000/mcp .venv/bin/python -m pytest -q: 68 PASS in 27.22s. Editor diagnostics and git diff --check PASS. Corrected read-only command mistakes and Origin-status expectation documented in troubleshooting.
+Result: DEPLOYED, not independently VALIDATED. Controller/CRDs/Gateway API v1.6.0; controller/proxy Ready with zero restarts on the app node; ClusterIP-only exact /mcp route. SDK 2025-11-25 discovered the exact two argument-free tools, repeated structured calls without session IDs, foreign Origin 403 and seven unrelated paths 404. Direct MCP probes and Host/Origin rejection unchanged. Health healthy/health_ok/200 observed; unavailable-upstream live gateway behavior not observed and no inference/GPU availability inferred.
+Security/cleanup: retained accepted HIGH controller Secret-read authority, authenticated TLS xDS and proxy audience-scoped 43200-second projected token with read-only CA/token mounts; no generic proxy token or MCP credentials. Temporary forward removed, port 18000 free. No Azure/GPU/PVC/network changes, commit or push.
+Artifacts: annotated gateway configuration/tests and README reading/deployment/rollback guide; STATUS handoff. Independent Tester, runtime security review and Architect acceptance pending.
+
+### Agent execution
+Agent: tester
+Date: 2026-10-23
+Why selected: independent behavioral and runtime validation of the newly deployed gateway/MCP path.
+Task: verify source contracts, real SDK discovery/repeated calls, routing boundaries, direct MCP preservation and actual deployment metadata without workload changes.
+Files inspected: governing/tester instructions, PROJECT_CONSTITUTION.md, STATUS.md, architecture/decisions, README.md, all three gateway YAML inputs, tests/test_gateway.py, tests/test_lab_mcp.py, MCP manifest, main.py, pyproject.toml and curated configuration.
+Files modified: none.
+Commands/tests: explicit-context Kubernetes/Helm metadata; owned localhost forwards on 18151/18152; existing .venv with bytecode/cache writes disabled. Gateway offline 3 PASS; existing failure/deadline/probe cases 4 PASS; live gateway 5 PASS in 13.24s; full live suite 68 PASS in 26.76s; supplemental direct MCP cases 9 PASS. Corrected one malformed metadata query; interrupted foreground attempts did not replace the completed checks.
+Result: independent PASS for observed CPU-only gateway/MCP behavior. Current generation 1 GatewayClass/Gateway/listener/route/backend conditions accepted/programmed/resolved; v1.6.0 CRDs/releases; exact pinned imageIDs, Ready app-pool pods and ClusterIP-only exposure confirmed. SDK 2025-11-25 lists exact two argument-free tools, repeated structured calls with no session IDs and matching curated overview. Health healthy/health_ok/200 throughout, not inference/GPU proof. Gateway foreign Origin 403 and seven unrelated paths 404; direct probes/Host/Origin 200/421/403. Gateway accepts foreign inbound Host: MCP's upstream authority check is not a gateway caller-Host boundary.
+Limits/cleanup: live upstream outage neither observed nor manufactured; offline failure tests do not prove live gateway outage behavior. No GPU/inference/isolation/authentication certification. Owned forwards exited, no listeners on 18151/18152; 18000 also free. No installs, Secret-value reads, workload mutation, commit or push.
+Artifacts: independent behavior/runtime evidence for Architect acceptance; no files created.
+
+### Agent execution
+Agent: security-reviewer
+Date: 2026-10-23
+Why selected: independent review of admitted gateway permissions, credentials, hardening and application exposure.
+Task: compare actual live deployment with D-015's accepted authority and trusted-lab boundary, without runtime requests or mutations.
+Files inspected: constitution, STATUS.md, README.md, architecture/decisions, repository/security-reviewer instructions, three gateway YAML inputs, MCP manifest, main.py and tests/test_gateway.py.
+Files modified: none.
+Commands/tests: explicit-context scoped Kubernetes objects/RBAC/bindings/pod specs/imageIDs/conditions/Services/bootstrap ConfigMap reads; proxy auth-can-i Secret-read denial (expected exit 1); bounded existing proxy logs (35 lines); Git/source/official TLS documentation reads. No tests, exec, forwards, runtime curl, Secret-object reads or Helm storage reads. Interrupted/interleaved reads discarded; CRD-version inventory incomplete in this review (separately completed by Tester).
+Result: conditional GO for continued trusted, supervised single-operator D-015 use; no new significant finding. Accepted HIGH cluster-wide controller Secret reads/other authority remain, with namespace-scoped provisioner writes. MEDIUM unauthenticated plaintext application access remains; inherited MCP reflection MEDIUM and availability LOW not remediated. Actual proxy generic automount false, audience-agentgateway 43200-second read-only projection/CA and TLS xDS configuration confirmed; proxy Secret-read authorization denied. MCP stays token-free. Admitted non-root/read-only/drop-ALL/no-escalation/seccomp, app placement, immutable images and internal-only Services verified. Bounded logs show request/tool metadata, no observed bodies/prompts/credentials.
+Limits: configuration inspection does not prove token/certificate rotation, invalid-token xDS rejection or process-level hardening; no whole-image, GPU/inference, live outage, customer/shared or production readiness claim. No further approval needed for unchanged accepted scope; expanded trust, targets, permissions or exposure needs renewed review/human decision.
+Artifacts: runtime security disposition for bounded architectural acceptance; no files created.
+
+### Agent execution
+Agent: architect
+Date: 2026-10-23
+Why selected: mandatory phase acceptance against independent behavior and runtime security evidence.
+Task: evaluate D-015's bounded gateway/MCP milestone, preserve unverified gates and reconcile the durable handoff.
+Files inspected: governing documents/profile, STATUS.md, architecture/decisions, README.md, coordinator execution log, main.py, all three gateway YAML inputs and tests/test_gateway.py.
+Files modified: STATUS.md, docs/architecture.md, docs/decisions.md, README.md only. Source/tests/manifests and coordinator log unchanged by the agent.
+Commands/tests: Git status/history; scoped git diff --check PASS twice; documentation diagnostics PASS. No tests rerun or cluster operations; acceptance uses recorded independent Tester and Security Reviewer evidence.
+Result: ACCEPT Phase 8 deployment/control plane plus observed CPU-only gateway/MCP interoperability as bounded VALIDATED for unchanged trusted, supervised single-operator use. Workload/contract annotations satisfy the requirement. Accepted HIGH controller Secret-read risk remains, not remediated. Live gateway outage independence is deferred, not passed; existing offline tests prove only MCP independence. Current GPU availability/inference are unvalidated and Phases 9/10 remain PLANNED pending independent D-011 acceptance and model routing.
+Artifacts: D-015 final architectural acceptance, current phase/handoff, corrected operator-reported GPU status and supervised gateway guide. No new agents, commit or push.
+
 ## MCP Kubernetes deployment prerequisites (2026-10-23)
 
 ### Agent execution

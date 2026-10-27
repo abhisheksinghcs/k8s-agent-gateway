@@ -1,9 +1,715 @@
 # STATUS
 
-Last updated: 2026-10-23 (D-014 trusted, supervised single-operator MCP milestone architecturally accepted; VALIDATED within that boundary)
+Last updated: 2026-10-27 (D-011 final bounded architectural ACCEPT; explicit historical offload and final-runtime/security prerequisites cleared; no model route authorized)
+
+Current authority: the final architectural verdict in "Current D-011 Architectural
+Acceptance" below supersedes earlier pending/hold statements for resolved gates.
+Developer, Tester and Security Reviewer records retain their handoff-time wording;
+they are historical evidence, not outstanding requests for another review.
+
+## D-011 Final Independent Security Disposition (2026-10-27)
+
+- Verdict: GO for continued private, trusted, supervised single-operator router
+    use with synthetic/public data. The hardening and explicit human residual-risk
+    dispositions clear the SECURITY prerequisite for separately authorized future
+    private-route design. No new scoped blocker. This supersedes the earlier
+    D-011 security hold for those resolved/disposed gates, NOT architectural
+    acceptance, supported-release route proof, route implementation/deployment
+    authorization or wider-access acceptance. Phases 9/10 remain PLANNED.
+- Authority: reviewed D-011's exact human diagnostic/hardening approval and
+    bounded risk acceptance; D-015's controller-authority acceptance is separate.
+    Acceptance expires BEFORE sharing, a new untrusted workload/local user, wider
+    exposure or target change. All workloads/local users must remain trusted.
+
+### Findings And Disposition
+
+- HIGH, accepted NOT fixed: unauthenticated plaintext router inference/model
+    administration remains reachable by cluster workloads. Evidence: all-interface
+    listener, ClusterIP:8080, no llm Ingress/NetworkPolicy; only existing exact
+    MCP route, no model/admin gateway route. Impact: direct backend bypass,
+    model-state/GPU/disk abuse and absent confidentiality. Recommendation: retain
+    the accepted trust/data boundary for this lab; before customer/shared/untrusted
+    access require separately reviewed authentication/authorization, transport and
+    enforceable backend isolation; before production also restrict administration
+    and resource abuse. No unauthorized network migration is required by this GO.
+- HIGH, separately accepted NOT fixed: controller cluster-wide Secret-content
+    get/list/watch and TokenReview create. Exact live role
+    agentgateway-agentgateway-system confirms these rules; namespaced deployer
+    binding does not narrow reads. Impact: controller compromise has broad
+    credential blast radius. D-015 accepts this only for the existing lab.
+    Recommendation: reconsider supported least-privilege/control-plane isolation
+    before shared/customer/production use; no new authority is granted here.
+- MEDIUM, confidentiality limitation remains: default verbosity 3 is not a
+    general payload-safety guarantee; warning paths can expose generated output
+    and temporary 4 can expose metadata/key suffixes. No selected credential/body
+    marker was observed in reviewed logs. Synthetic/public traffic only and no
+    diagnostic override are required for this bounded lab; review redaction and
+    collector access/retention before private/customer data or broader use.
+- Prior MEDIUM root/absent-seccomp finding is remediated in the observed router
+    AND resident workers. Writable rootfs/model cache, inherited MCP reflection
+    and availability residuals are not certified away. Read-only rootfs/writable-
+    path validation and supply-chain/logging assurance remain future hardening,
+    not new blockers for this unchanged trusted lab.
+
+### Independent Checks And Limits
+
+- Fresh read-only checks: final pod llama-cpp-5f676cf74f-vzjtv Ready/zero
+    restarts, exact pinned imageID; UID/GID 10001, Seccomp 2, all five capability
+    sets zero and NoNewPrivs 1 for PID 1 and workers 712/798/884. No token file,
+    init container, host network/PID/IPC or credential envFrom. Selected key/log
+    override presence checks and preset key/debug directives were absent.
+    Pod lifecycle start is 20:36:47Z; container start is 20:37:01Z.
+- Cache: rw ext4, Bound 64Gi RWO managed-csi-premium; CSI fsGroupPolicy=File.
+    Root/model directories root:10001 2775, lost+found 2770; four root:10001
+    blobs 0664, four 10001:10001 refs 0644, four symlinks. No world-writable
+    non-symlink or inaccessible directory/dereferenced regular target. These are
+    read/write/traverse permission checks, NOT a new write/download/remount test.
+    Both retained before/after inventories compare equal; no full weight hashes.
+- Current bounded log read: 361 lines, nine threshold-3 records, zero selected
+    threshold-4/5, CUDA-init/offload or credential/body markers. Router args and
+    worker/preset checks retain normal logging. This is not whole-log/image or
+    remote-retention certification; no raw log/body/environment dump was output.
+- Historical private diagnostic log independently correlates four aliases/ports
+    40649/33453/36313/41137 with CUDA initialization and 29/29, 29/29, 33/33,
+    41/41 actual offload records. Retained ReplicaSet specs compare identical
+    after removing ONLY trailing --log-verbosity 4; surviving pod events
+    corroborate the capture window. Diagnostic pod is deleted: no fresh final-pod
+    offload logs or signed/tamper-proof provenance is claimed.
+- Independently parsed retained Tester responses/status artifacts: four exact
+    model matches, HTTP 200/curl exit 0/exact 42, completion counts 3/3/2/2;
+    before/after health status ok. Tester reports nine scoped gates and existing
+    suite 66 PASS/2 opt-in live-gateway SKIP. Reviewer did NOT rerun Python tests,
+    inference, forwarding, downloads/admin APIs or live gateway requests.
+- Commands executed: git status --short --untracked-files=all; git log -4
+    --oneline; git diff/stat/numstat/check/cached-name and ls-files inventories;
+    local Node full-content scans, safe evidence predicates/inventory comparisons;
+    explicit-context kubectl get pod/ReplicaSets/events/PVC/CSIDriver/Services/
+    Ingress/NetworkPolicy/gateway objects/selected RBAC and existing-pod exec for
+    id, selected /proc status/cmdline/override presence and stat/find/mount access;
+    bounded logs --timestamps --tail=500 with allowlisted/count-only output.
+    EVERY Kubernetes call used --context=aks-agw-lab; local fallback because no
+    deferred-tool loader is available. Missing rg (127) was handled locally;
+    an empty RBAC label selection was corrected using exact observed role names.
+
+### Public Repository And Architect Handoff
+
+- Scanned complete contents of ALL 12 pending tracked/untracked files, not only
+    added lines. No credential/private-content finding or raw diagnostic artifact
+    path; JSON request example is the documented public arithmetic prompt. UUID
+    candidates are operational pod/PVC IDs, a pre-existing subscription reference
+    and a built-in role ID, not credentials. Registry diff is newline-only.
+    Index is empty. Heuristic/manual review is not full-history secret assurance.
+- Files inspected/read or fully scanned: PROJECT_CONSTITUTION.md,
+    .github/copilot-instructions.md, .github/agents/security-reviewer.agent.md,
+    STATUS.md, README.md, docs/architecture.md, docs/decisions.md,
+    docs/troubleshooting.md, docs/agent-execution-log.md, infra/registry.bicep,
+    k8s/llm/llama-cpp.yaml, k8s/gateway/controller-values.yaml,
+    k8s/gateway/parameters.yaml, k8s/gateway/gateway.yaml, tests/test_gateway.py,
+    relevant tests/test_lab_mcp.py contracts, pyproject.toml, .gitignore and
+    .dockerignore; private diagnostic log, both cache inventory pairs, Tester
+    response/status/health artifacts and private directory/file mode metadata.
+- Modified ONLY STATUS.md for this final disposition; coordinator execution log
+    untouched. No delegation, installs, workload/PVC/network mutation, cleanup,
+    stage/commit/push or reviewer-created diagnostic artifacts. Existing private
+    evidence remains outside Git in directories 0700/files 0600; preserve until
+    Architect is done. No Secret objects or credential values were read.
+- Publication prerequisite: coordinator stages explicit reviewed paths, excludes
+    /tmp diagnostics/raw responses/credentials and reruns staged-content safety
+    checks after any later edits. Empty index now cannot guarantee future staging.
+- Next: Architect evaluates independent Tester evidence and this security GO,
+    explicitly accepting or rejecting historical-offload provenance limits and
+    reconciling historical pending claims in current docs. Future route work still
+    requires supported v1.6.0 fixed-upstream/path/model proof, separate human
+    authorization and independent post-implementation security/behavior checks.
+    No gateway inference, route support, outage/recovery, concurrency, cache
+    persistence/full-hash, hostile-client defense or shared/production acceptance.
+
+## D-011 Independent Post-Hardening Validation (Tester, 2026-10-27)
+
+- Verdict: bounded direct behavior and observed hardening VALIDATED. No failed
+    behavioral gate. Historical explicit-offload evidence passes with the
+    provenance limits below; this is NOT fresh offload logging from the final
+    pod. Security review and architectural acceptance remain pending. No route
+    clearance, phase acceptance or expansion of D-011 risk acceptance follows.
+- Scope: read-only local kubectl fallback, EVERY invocation explicitly
+    `--context=aks-agw-lab`; no deferred-tool loader available. No workload,
+    verbosity, permission, infrastructure, route or MCP changes; no restart,
+    download/admin API, installs, delegation, commit/push or execution-log edit.
+    No Secret objects, token contents or credential values were read. Selected
+    key/log override checks reported presence/absence only; all selected absent.
+
+### Gate Results
+
+| Gate | Result | Independent Evidence |
+|---|---|---|
+| Admitted and runtime hardening | PASS | UID/GID 10001, RuntimeDefault/Seccomp 2, all five capability sets zero, NoNewPrivs 1 for router and workers; eight captured process records, zero violations; token absent, no init container/host networking |
+| Image, args, preset and storage drift | PASS | Exact pinned digest below; build 11749/1d88cb05f; four mounted Q4_K_M presets match manifest; models-max 3, context 8192, ngl 99, default verbosity 3; same Bound 64Gi RWO managed-csi-premium PVC |
+| Cache permissions and inventory | PASS (permission-level write check) | UID 10001 can read all dereferenced files and write/traverse all cache directories and regular targets; no arbitrary write probe; no world-writable regular file/directory; before/after type/size/path/symlink inventories identical |
+| GPU prerequisites and workers | PASS | All three nodes Ready; GPU node allocatable nvidia.com/gpu=1; alias-correlated GPU compute processes and CUDA library mappings observed |
+| Historical explicit CUDA/offload | PASS, historical only | Private full log independently extracted alias/port/repository/build/device/X/Y records for all four models; retained ReplicaSet and pod events corroborate capture window, not cryptographic provenance |
+| Health and discovery | PASS | HTTP 200/status ok before and after; four exact source=preset IDs plus four source=cache entries; final three loaded presets |
+| Four bounded direct inference requests | PASS | Four HTTP 200, curl exit 0, exact content 42, requested model echoed, positive usage; table below |
+| Exposure, route and MCP boundary | PASS (observed scope) | Relevant Services ClusterIP/no externalIPs; no llm Ingress; only generation-1 exact /mcp HTTPRoute/backend/Gateway; MCP deployment remains generation 1 and existing image; no model/admin route |
+| Existing manifest/protocol regressions | PASS | Full existing two-file suite: 66 passed, 2 skipped in 14.13s; skipped tests require live gateway opt-in, intentionally not set |
+
+- Final pod `llama-cpp-5f676cf74f-vzjtv`, UID
+    `d155416b-83e2-4990-8217-673e69593594`, started 20:37:01Z on
+    `aks-gpunp-61997117-vmss000017`, remained Ready/zero restarts after requests.
+    ImageID is `ghcr.io/ggml-org/llama.cpp@sha256:78d0541639f5ed3f463e4bef8284027792e2d74cc2311b7628e17c2a0e7587db`;
+    executable reports `0.7.0-dev (build 11749, commit 1d88cb05f)`.
+- Exact structured comparisons: diagnostic ReplicaSet pod spec equals final
+    ReplicaSet pod spec after removing only trailing `--log-verbosity 4`;
+    final Deployment pod spec equals private baseline after excluding only
+    pod securityContext. This bounds image/args/env/resources/volumes/scheduling
+    drift; admission-added GPU requests/tolerations were also inspected.
+- Cache root/model directories root:10001 2775, lost+found 2770. Four regular
+    blobs are root:10001 0664; four refs are 10001:10001 0644. Eight regular
+    files/four symlinks, rw ext4 mount, CSI fsGroupPolicy=File. Symlink 0777 mode
+    is not world-write permission on its target. No repair or initializer used
+    by Tester; no actual new-file write/download, full hash, persistence or
+    fsGroup remount test is claimed. Historical before/after inventories also
+    compare equal; current independent inventory compares equal across requests.
+
+### Direct Responses And Runtime GPU Evidence
+
+Public prompt: `What is 17 + 25? Reply with only the number.` Each request used
+temperature 0, max_tokens 32, stream false, curl deadline 600s, sequentially
+through owned `127.0.0.1:18080`. All HTTP 200/exact `42`/positive usage:
+
+| Preset | Completion Tokens | Seconds | Observed Worker PID / Port / GPU MiB |
+|---|---|---|---|
+| qwen2.5-7b-instruct | 3 | 3.809582 | 610 / 51277 / 5398 (captured before later eviction) |
+| qwen2.5-coder-7b-instruct | 3 | 3.873356 | 712 / 44917 / 5398 |
+| llama-3.1-8b-instruct | 2 | 3.424428 | 798 / 47325 / 6190 |
+| phi-4 | 2 | 4.201650 | 884 / 57669 / 10738 |
+
+- Ordinary LRU evicted Coder for Qwen, Llama for Coder, Phi for Llama, then
+    Qwen for Phi; discovery never exceeded three loaded presets. Final workers
+    are Coder/Llama/Phi. GPU is RTX Pro 6000 Blackwell DC-4-48Q, MIG enabled,
+    driver 595.91.07/CUDA 13.4. Structured nvidia-smi queries returned
+    Insufficient Permissions; ordinary nvidia-smi supplied numeric PIDs/memory
+    without escalation. No download-matching live log lines, and unchanged
+    inventory supports cached operation; not network-egress certification.
+    Timings include these cache-backed loads, not a cold-download/throughput test.
+
+### Historical Log Provenance And Limits
+
+- Reviewed targeted extraction from private `/tmp/d011-gates.oMokHP/diagnostic-full.log`
+    (133498 bytes, 0600; directory 0700), not copied documentation or broad raw
+    payload output. Each child logs build 11749/1d88cb05f, exact bartowski
+    repository/Q4_K_M and threshold 4; port-tagged CUDA initialization identifies
+    one RTX Pro 6000 Blackwell MIG 4g.48gb, compute 12.0, VMM no, 48838 MiB.
+
+| Preset | Historical Port | CUDA Initialization UTC | Actual Offload UTC / Count |
+|---|---|---|---|
+| qwen2.5-7b-instruct | 40649 | 20:19:52.670382904 | 20:20:39.602304678 / 29/29 |
+| qwen2.5-coder-7b-instruct | 33453 | 20:20:44.416275063 | 20:21:31.231540213 / 29/29 |
+| llama-3.1-8b-instruct | 36313 | 20:21:35.985750297 | 20:22:25.229433918 / 33/33 |
+| phi-4 | 41137 | 20:22:30.544225461 | 20:24:00.113744727 / 41/41 |
+
+- Lines explicitly say `ggml_cuda_init: found 1 CUDA devices` and
+    `load_tensors: offloaded X/Y layers to GPU`, correlated to router alias/port
+    spawn and repository lines. Retained ReplicaSet `llama-cpp-578cb5c7b9`,
+    created 20:16:52Z, holds the same pin/hardening plus verbosity 4. Surviving
+    events identify historical pod `llama-cpp-578cb5c7b9-c9dx5`, UID
+    `ab07469c-8050-4a67-875e-fa2c33f0a6e1`, Started 20:17:02Z/Killing 20:36:45Z;
+    log starts 20:17:02Z. That pod is deleted: no fresh retrieval/imageID or
+    signed/tamper-proof chain can be established. Corroboration supports this
+    historical capture, not independent observation of the original rollout.
+- Final default-3 log has zero explicit CUDA/offload lines, as expected. Fresh
+    inference/process/GPU evidence is separate; historical ports/counts are NOT
+    asserted as freshly logged final-pod counts. No restart/verbosity change was
+    made to recreate them. Remote log retention/access remains uncertified.
+
+### Reproduction, Cleanup And Handoff
+
+- Commands actually used: `kubectl --context=aks-agw-lab -n llm get pod
+    llama-cpp-5f676cf74f-vzjtv -o json`; `get deployment llama-cpp -o json`;
+    `get replicasets -l app=llama-cpp -o json`; `get pvc llama-models -o json`;
+    existing-pod `exec ... -c llama-server -- sh -c` for id, selected /proc
+    status/cmdlines/maps, mounted preset, stat/find permissions/inventories and
+    `nvidia-smi`; `exec ... -- sh -c '/app/llama-server --version 2>&1'`.
+    All get/exec/log/event/node/Service/route/CSI calls used explicit context.
+- Forward: `kubectl --context=aks-agw-lab -n llm port-forward --address 127.0.0.1
+    service/llama-cpp 18080:8080`. HTTP requests follow README's exact curl
+    arithmetic body/flags with each table alias and private `-o` response plus
+    `-w 'http=%{http_code} exit=%{exitcode} seconds=%{time_total}\n'` capture.
+    GET `/health` and `/v1/models` only otherwise; no model-admin operation.
+    Private log extraction used grep/awk restricted to build, spawn, hf-repo,
+    verbosity, CUDA/device, actual offload and LRU records.
+- Tests: `env -u GATEWAY_TEST_URL PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.
+    .venv/bin/pytest -q tests/test_lab_mcp.py tests/test_gateway.py -p no:cacheprovider`.
+    Existing interpreter/dependencies only; no install or environment change.
+- Owned forward stopped with Ctrl-C; lsof confirms no listener on 18080.
+    All synchronous clients completed. Historical artifacts preserved unchanged
+    for Security Reviewer/Architect; new response/runtime/cache evidence retained
+    privately in `/tmp/d011-tester.D4YsvT` (0700/files 0600). No raw diagnostics
+    added to Git. Dirty work preserved; no coordinator execution-log edits.
+- Inspected: constitution, STATUS, repository/tester instructions, architecture,
+    relevant decisions/troubleshooting, README, llama manifest, both test files,
+    pyproject; private historical log/worker excerpts/baseline/inventory metadata;
+    runtime resources/process/cache/GPU/route observations above. Modified only
+    STATUS.md and docs/troubleshooting.md. Immediate documentation
+    `git diff --check` passed; no source/tests/manifests modified by this assignment.
+- Remaining: Security Reviewer assesses artifacts/hardening/risk disposition;
+    Architect evaluates independent evidence with historical provenance limits.
+    No gateway inference, live MCP regression, outage/recovery, concurrency,
+    malicious-client defense, precise Recreate downtime or full-cache hash test.
+    Existing unauthenticated/plaintext/direct-admin reachability remains within
+    the recorded bounded human acceptance, not remediated or certified here.
+    Phases 9/10 remain PLANNED and no new model route is authorized.
+
+## D-011 Bounded Developer Gate Resolution (2026-10-27; DEPLOYED)
+
+- Human selections: **"Approve bounded diagnostic and hardening"** and
+    **"Accept bounded lab risks"**. Full scope/expiry is recorded in D-011 in
+    docs/decisions.md: brief Recreate, temporary verbosity 4 synthetic arithmetic,
+    non-root/RuntimeDefault and only necessary existing-volume permission repair.
+    Plaintext/unauthenticated HTTP, unrestricted reachability/direct model admin
+    and resource/state abuse are accepted ONLY for future private supervised
+    single-operator use, trusted workloads/local users, synthetic/public data.
+    Expires BEFORE sharing, new untrusted workload, wider exposure or target change.
+    NO route authorization; phases 9/10 remain PLANNED.
+- CREATED/DEPLOYED: manifest adds UID/GID 10001, runAsNonRoot, RuntimeDefault and
+    fsGroup 10001/OnRootMismatch. Immediate server dry-run passed, other objects
+    unchanged. Existing image/presets/storage/scheduling/security controls retained.
+- Baseline: Ready llama-cpp-74c6bc49b5-6pvtb, zero restarts on GPU node
+    aks-gpunp-61997117-vmss000017; UID/GID 0, Seccomp 0, CapEff 0, NoNewPrivs 1.
+    Four root-owned model trees 0755/files 0644; sole 0700 directory is lost+found.
+    Azure Disk CSIDriver fsGroupPolicy=File. No manual repair/root init planned.
+- Rollout: hardened pod llama-cpp-5f676cf74f-kw6vw reached Ready/zero restarts;
+    actual UID/GID 10001, Seccomp 2, CapEff 0, NoNewPrivs 1, token absent.
+    Supported fsGroup changed cache dirs to root:10001 2775 and lost+found 2770;
+    write probe passed and was removed. No manual chmod/chown/root init used.
+- Temporary threshold-4 pod llama-cpp-578cb5c7b9-c9dx5, same image pin/build
+    11749/1d88cb05f, returned HTTP 200/exact 42 for all four sequential public
+    arithmetic requests (temperature 0, max_tokens 32, stream false, deadline
+    600s each). Completion tokens 3/3/2/2; seconds 48.586/48.328/50.844/91.782,
+    including loads, not warm/throughput benchmarks. Normal idle-LRU Qwen eviction
+    for Phi observed, no administration endpoint invoked.
+- Explicit Developer offload evidence, port-correlated to exact aliases:
+
+| Preset | Child Port | CUDA Found | Actual Layer Line |
+|---|---|---|---|
+| qwen2.5-7b-instruct | 40649 | 1 device, 20:19:52Z | `load_tensors: offloaded 29/29 layers to GPU`, 20:20:39Z |
+| qwen2.5-coder-7b-instruct | 33453 | 1 device, 20:20:44Z | `load_tensors: offloaded 29/29 layers to GPU`, 20:21:31Z |
+| llama-3.1-8b-instruct | 36313 | 1 device, 20:21:35Z | `load_tensors: offloaded 33/33 layers to GPU`, 20:22:25Z |
+| phi-4 | 41137 | 1 device, 20:22:30Z | `load_tensors: offloaded 41/41 layers to GPU`, 20:24:00Z |
+
+- Device each time: NVIDIA RTX Pro 6000 Blackwell DC-4-48Q MIG 4g.48gb,
+    compute 12.0, VMM no, reported VRAM 48838 MiB. Captured router/child-worker
+    security remained UID/GID 10001/Seccomp 2/CapEff 0/NoNewPrivs 1; workers
+    inherited threshold 4. Selected API/HF key and log overrides were absent;
+    no credential values printed, level 5/private traffic/browser UI excluded.
+- Default threshold 3 restored by server-dry-run/apply of checked-in manifest;
+    new pod llama-cpp-5f676cf74f-vzjtv Ready/zero restarts on node 000017. Final
+    four-model cached inference passed HTTP 200/exact 42/positive completion usage
+    3/3/2/2; seconds 48.015/47.625/50.161/91.031, same bounded public prompt and
+    parameters as diagnostic requests. Final health status ok; at 20:42:31Z GPU
+    compute PIDs 217/308/400 (Coder/Llama/Phi) held 5398/6190/10738 MiB. Router
+    and these workers all had UID/GID 10001, every CapInh/Prm/Eff/Bnd/Amb set 0,
+    NoNewPrivs 1 and Seccomp 2. Token absent; no logging override in live args.
+    Final imageID equals ghcr.io/ggml-org/llama.cpp@sha256:78d0541639f5ed3f463e4bef8284027792e2d74cc2311b7628e17c2a0e7587db;
+    pod started 20:37:01Z. Existing Service ClusterIP:8080 and bound 64Gi PVC
+    pvc-01eac67d-00af-493e-b0b9-7a6597404a70 unchanged. Cache inventory diff empty;
+    no world-writable cache files found. Cache write test removed its own file.
+    Diagnostic forward 127.0.0.1:55957 closed with owned Ctrl-C. Full startup
+    captures private outside Git; only reviewed excerpts above are durable.
+    Defender host-log access exists; remote retention/access not certified or
+    changed, and local deletion cannot remove Kubernetes/collector copies.
+- Three approved Recreate rollouts (hardening, temporary 4, restore 3). Readiness
+    watches completed in roughly 20-31s; precise endpoint downtime was not sampled.
+    Model workers reload cold after replacement. T-003 early/incomplete terminal
+    output recurred; private HTTP artifacts prevent blind duplicate requests.
+    Earlier missing rg exit 127 was a read-only tooling failure, not workload failure.
+- Next: independent Tester must repeat behavior/security observations;
+    Security Reviewer assesses
+    hardening/cache/logging/risk disposition; Architect evaluates only their
+    evidence. No independent VALIDATED/acceptance or model-route clearance claimed.
+- Existing dirty work preserved; no agent-execution-log edit, route, infrastructure,
+    dependency, image build/push, commit/push or administrative model operation.
+- Focused offline check: existing `test_curated_and_packaged_config_drift`
+    passed (1 passed, 62 deselected, 2.06s), using installed pytest with
+    PYTHONPATH=. and no bytecode/cache provider. Server dry-run passed before
+    each workload change; git diff --check passed. Existing editor warning for
+    absent CPU limit is unchanged/out of scope. Cache size/path/symlink inventory
+    diff is empty; not a full-content hash or independent persistence test.
+- Files inspected: PROJECT_CONSTITUTION.md, this STATUS, .github repository
+    instructions/developer profile, docs/architecture.md, docs/decisions.md,
+    docs/troubleshooting.md, README.md, k8s/llm/llama-cpp.yaml, relevant existing
+    tests/test_lab_mcp.py and tests/test_gateway.py contracts; pinned upstream
+    CUDA Dockerfile/common/log.cpp/server-models.cpp and Kubernetes security-
+    context documentation. Azure diagnostics/AKS skill guidance was read.
+- Files modified by this assignment ONLY: k8s/llm/llama-cpp.yaml, STATUS.md,
+    README.md, docs/architecture.md, docs/decisions.md, docs/troubleshooting.md.
+    Coordinator owns docs/agent-execution-log.md; it was not edited.
+- Private rollback/source/runtime evidence is under /tmp/d011-gates.oMokHP
+    (0700; log 0600). Keep for independent review, then remove diagnostic logs/
+    responses/worker captures. Final lsof check found no listener on owned 55957;
+    process check found no owned inference/forward client remaining. Original pod
+    template is in baseline-deployment.json and clean last-good manifest snapshot
+    in last-good.yaml outside Git. Source rollback removes only the newly added
+    pod securityContext; dry-run/apply then retains all pre-existing container
+    controls/image/presets/PVC. Group metadata need not be reverted for root.
+    Returning to root/absent seccomp is not an accepted final security posture.
+- Reproduction/check commands: `kubectl --context=aks-agw-lab apply
+    --dry-run=server -f k8s/llm/llama-cpp.yaml`, then `apply -f` and
+    `kubectl --context=aks-agw-lab -n llm rollout status deployment/llama-cpp
+    --timeout=240s`; temporary JSON-patch appended only `--log-verbosity`, `4`,
+    and checked-in-manifest apply removed them. Named diagnostic pod full logs
+    used `logs pod/llama-cpp-578cb5c7b9-c9dx5 -c llama-server --timestamps
+    --tail=-1` with explicit context/namespace. Final requests used existing-pod
+    `exec llama-cpp-5f676cf74f-vzjtv -c llama-server -- curl --noproxy '*'
+    -sS --max-time 600` to loopback:8080/v1/chat/completions, never model-admin.
+    Process status/cmdlines, id, nvidia-smi, stat/find and cache inventory diff
+    supplied runtime evidence. Offline: `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.
+    .venv/bin/pytest -q tests/test_lab_mcp.py -k curated_and_packaged_config_drift
+    -p no:cacheprovider`; final `git diff --check` passed.
+- Tooling limitation: no deferred-tool loader available; used authorized local
+    kubectl fallback, every operation explicitly --context=aks-agw-lab. No context
+    switch, Azure/pool/network operation, installs, dependency changes or delegation.
 
 Labels used: FACT, DECISION, ASSUMPTION, HYPOTHESIS, OPEN QUESTION.
 Lifecycle: PLANNED -> CREATED -> DEPLOYED -> VALIDATED (or FAILED).
+
+## D-011 Independent Security Review (2026-10-27)
+
+- Verdict: NO-GO for new model-route implementation/deployment until the gates
+    below are met. Conditional GO for a separately authorized temporary offload
+    diagnostic using only synthetic public data within the existing trusted,
+    supervised single-operator boundary. No new blocker to unchanged historical
+    lab use is asserted. D-015 CPU/MCP GO is not router clearance; no phase
+    acceptance, human risk acceptance or model-route authorization is granted.
+    This review supplements the earlier Architect verdict below, including its
+    then-current statement that a separate security review had not occurred.
+- Scope/evidence: governing docs/security profile, current STATUS/architecture,
+    D-011/D-014/D-015 decisions, README direct/gateway guides, llama manifest,
+    all three gateway inputs and gateway tests; pending tracked diffs and four
+    untracked gateway/test inputs. Read-only local kubectl fallback was used
+    because no deferred-tool loader is available; EVERY command explicitly used
+    `--context=aks-agw-lab`. No context switch or Secret values were read.
+- Fresh runtime FACT: existing pod `llama-cpp-74c6bc49b5-6pvtb` imageID matches
+    the pinned digest and args still omit logging overrides. `/proc/1/status`
+    and `id` show UID/GID 0, CapEff=0, NoNewPrivs=1, Seccomp=0. Service is
+    ClusterIP:8080 without externalIPs; no llm Ingress/NetworkPolicy, no
+    hostNetwork, token automount false and token file absent. Recorded cluster
+    network-policy engine is none; no engine migration/policy objects proposed.
+
+### Findings And Minimum Developer Contract
+
+1. HIGH for new/untrusted access: unauthenticated model administration and
+    inference share plaintext, unisolated HTTP. Manifest binds all pod interfaces;
+    pinned server registers POST/DELETE `/models` and POST `/models/load` and
+    `/models/unload`. Other cluster workloads can bypass any gateway route and
+    change/download/delete model state or consume GPU/disk. ClusterIP, localhost
+    forwarding, CORS and gateway path filtering are not caller authentication or
+    direct-backend isolation. Required before new lab routing: explicit human
+    disposition below OR a separately reviewed authentication/transport design.
+    Before customer/shared access, implement authentication/authorization and
+    confidentiality at both hops plus an enforceable direct-backend boundary;
+    before production also separate/restrict administration and bound resource
+    abuse. Do not silently add identities/resources or migrate Cilium here.
+2. MEDIUM: root process and absent seccomp increase impact of server/model-parser
+    compromise despite dropped capabilities/no escalation/token absence.
+    Proposed minimum before new lab routing: pod `runAsNonRoot: true`,
+    `runAsUser: 10001`, `runAsGroup: 10001`, `seccompProfile.type: RuntimeDefault`;
+    retain existing drop-ALL/no-escalation/GPU scheduling/token policy. Numeric
+    UID/GID 10001 is a proposed choice, NOT tested image support. The pinned
+    CUDA Dockerfile runs the binary directly with no application USER requirement;
+    live executable/app are 0755, observed GPU nodes 0666/capability files 0444.
+    These permissions are prerequisites, not proof of non-root CUDA operation.
+    `/models` is root:root 0755; depth-three inventory found 21 directories 0755,
+    one 0700, eight files 0644. Changing UID alone is NOT safe. Evaluate pod
+    `fsGroup: 10001` with `fsGroupChangePolicy: OnRootMismatch` and actual CSI
+    ownership handling first; this may mutate existing PVC metadata and needs
+    explicit permission. No recursive chown, root init container or chmod 777
+    workaround is authorized. Verify cache traversal/read/write/download needs,
+    child spawning, CUDA libraries/devices and tmp paths before rollout.
+    Docker inspect found no locally cached pinned image; no pull/run attempted.
+    Local compatibility and actual AKS RuntimeDefault syscall compatibility are
+    UNVERIFIED. Under separate authorization validate admission, UID/GID/seccomp=2
+    for router AND workers, readiness, all four inference/offload paths and cache
+    usability. Never silently fall back to root/Unconfined. Failure requires a
+    narrow repair or explicit human exception. Read-only rootfs with bounded tmp
+    is recommended for demos/production after writable-path validation, not an
+    assumed prerequisite for this minimal lab change.
+3. MEDIUM diagnostic confidentiality: verbosity 4 is TRACE, not payload-safe.
+    Pinned `server-http.cpp` logs method/path/peer/status at 4 and a single API
+    key's final four characters at 4. Request/response dumps and token text are
+    DEBUG=5; `server-models.cpp` prints child argv already at INFO=3. Never put
+    keys/tokens in CLI/presets or assume a future key-file removes every logging
+    risk. `common/chat.cpp` can log unparsed generated output at WARNING even
+    below 4; slot-debug can emit prompt fragments. This is not a new observed
+    leak from this pod, but rules out a general no-prompt/no-secret logging claim.
+
+### Safe Diagnostic Limits And Remaining Gates
+
+- Pinned-source basis: commit `1d88cb05f1a257f90741538ca3aca6c1b015c6d3`,
+    `common/log.h`, `common/log.cpp`, `common/chat.cpp`, `common/arg.cpp`,
+    `common/preset.cpp`, `.devops/cuda.Dockerfile`, and server HTTP/context/chat/
+    task/models/common/main sources. In particular
+    [HTTP metadata/key suffix/body levels](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/tools/server/server-http.cpp#L229),
+    [warning-level generated output](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/common/chat.cpp#L1667),
+    [child argv logging](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/tools/server/server-models.cpp#L1445).
+    Source inspection is bounded, not whole-image/dependency certification.
+- Safe diagnostic contract: temporary `--log-verbosity 4` ONLY, same pinned image,
+    presets/GPU/context/cache/endpoints; no level 5/verbose, prompt-directory,
+    JSONL, slot-debug or trace overrides. Check actual args and selected override
+    presence without environment/credential dumps. Selected live overrides checked
+    were unset. Use only README's public arithmetic prompt, sequentially for four
+    approved presets, `max_tokens=32`, `stream=false`, client deadline 600 seconds
+    each; no concurrent normal/customer traffic, secrets, private data or browser
+    UI. This limits input sensitivity, not proof that arbitrary output is safe.
+- Authorize Recreate interruption/model reload first. Capture named new-pod
+    startup logs from deployment through the four loads with explicit context,
+    timestamps and finite collection duration, not a trailing 300-line window
+    that can miss loads. Keep raw logs private/outside Git with restrictive local
+    permissions; inspect locally and retain only reviewed alias/port, CUDA device,
+    observed `offloaded X/Y` counts, status/usage/times. Do not dump raw logs into
+    chat or Git; filtering does not prevent sensitive originals in Kubernetes
+    logs/collectors. Check existing collection/retention/access and delete local
+    diagnostics when no longer needed. Revert to threshold 3 after capture under
+    the same approval, accounting for another Recreate. No historical log recovery
+    is implied. Explicit CUDA initialization AND actual X/Y for EACH model plus
+    fresh successful responses remain UNSATISFIED until independently observed.
+- Minimum future route contract, not implemented: separately verify v1.6.0
+    supported backend/path/model handling; fixed llama Service upstream, exact
+    POST `/v1/chat/completions` only (GET discovery only if explicitly needed),
+    no generic `/` or `/v1` prefix/admin/UI forwarding, no dynamic destination or
+    caller-selected credentials. Preserve exact MCP route and all existing
+    control-plane security. Test denied admin/unrelated paths, all four approved
+    model mappings and safe logs. Unknown models must not broaden the approved
+    catalog. Path restrictions do NOT fix direct Service access. Independent
+    gateway inference validation/security review still follows implementation.
+- Exact human decision needed if controls are deferred: explicitly accept, for
+    the new private model route ONLY, unauthenticated plaintext client/proxy/model
+    traffic and unrestricted cluster reachability including direct model admin
+    access, resource/state abuse and absent confidentiality; affirm all cluster
+    workloads/local users are trusted, one supervised operator, synthetic/public
+    data only, no sharing/customer/public access; record an expiry/revisit trigger
+    on changed users/workloads/data/exposure. Alternatively keep routing blocked
+    and request a separately scoped control design. Existing D-015 RBAC acceptance
+    does not answer this question. A general request to resolve gates/commit is
+    not informed risk acceptance. Root/seccomp exceptions need separate explicit
+    disposition if validated hardening cannot be delivered.
+- Public-repo check: heuristic credential scan of 1,305 tracked added lines plus
+    four untracked gateway/test files found zero candidates; bounded manual review
+    found no new credential/private-content finding. Operational identifiers are
+    not credentials. This is not full history/secret certification; coordinator
+    must rerun scoped checks after later edits and before publishing.
+- Checks/scope: Git status/recent history/diff/diff-check, immutable upstream
+    HTTPS source reads, read-only kubectl get/exec process/filesystem observations,
+    cached-image inspect only. No inference/forward, log-level/workload/PVC mutation,
+    install/build/push, delegation, commit/push or execution-log edit. Only this
+    STATUS review was added; prior dirty work preserved. Immediate scoped document
+    validation follows. Unresolved: hardening runtime/cache compatibility, actual
+    offload logs, human network/auth disposition and supported-release route proof.
+
+## Current D-011 Architectural Acceptance (2026-10-27)
+
+- DECISION: ACCEPT D-011 as bounded VALIDATED for the unchanged trusted,
+    supervised single-operator lab. The explicit initialization/offload gate and
+    router hardening/security prerequisite are satisfied on the recorded evidence.
+    D-011 model-prerequisite clearance is granted, NOT route authorization or
+    acceptance of a gateway model path. Phases 9/10 remain PLANNED.
+
+| Gate | Architectural Disposition |
+|---|---|
+| Explicit CUDA initialization and actual offload | SATISFIED, historical diagnostic only: independent Tester correlated aliases/repositories/child ports 40649/33453/36313/41137 with initialization and Qwen 29/29, Coder 29/29, Llama 33/33, Phi 41/41; Security Reviewer corroborated the retained evidence |
+| Diagnostic provenance and final configuration | ACCEPT bounded provenance: retained ReplicaSet specs differ only by trailing verbosity 4; events corroborate the capture window; same pinned build 11749/1d88cb05f. Deleted diagnostic pod prevents fresh retrieval or tamper-proof provenance. These are NOT fresh final-pod startup logs |
+| Final direct inference, health, discovery and LRU | SATISFIED: independent four HTTP 200/exact `42`/matching-model results, completion tokens 3/3/2/2; health ok before/after; four presets plus four cache entries; max-three/ordinary LRU preserved; GPU workers/CUDA mappings correlated separately |
+| Final hardening and cache compatibility | SATISFIED within observed scope: Ready/zero restarts, same image; router/resident workers UID/GID 10001, RuntimeDefault/Seccomp 2, all capability sets zero, NoNewPrivs 1, no token; default verbosity 3 restored. fsGroup 10001 supplied existing-PVC access without root init/manual repair/world-write |
+| Independent regression and security review | SATISFIED: Tester nine gates PASS, existing suite 66 PASS/2 opt-in live-gateway SKIP; final Security Reviewer GO, root/absent-seccomp remediated, no new scoped blocker. No tests rerun by Architect |
+
+- Rationale: accept actual independently reviewed initialization/count records
+    plus separately observed final-runtime behavior; do not infer counts from
+    `-ngl 99` or demand a repeat diagnostic solely for reassurance. Historical
+    full reported X/Y offload applies to those diagnostic model loads, not a
+    fresh exact-layer measurement of final default-3 workers.
+- Accepted HIGH risks remain NOT fixed: plaintext/unauthenticated HTTP,
+    unrestricted cluster reachability, direct model administration and GPU/disk/
+    state abuse; controller cluster-wide Secret reads/TokenReview remain under
+    separate D-015 acceptance. ONLY trusted workloads/local users, supervised
+    single operator and synthetic/public data. Acceptance expires BEFORE sharing,
+    new untrusted workloads/local users, wider exposure or target change.
+- MEDIUM logging confidentiality remains: default 3 can expose generated output
+    on warning paths; temporary 4 is not payload-safe. Remote retention/access,
+    whole-log/image safety and full-history secret assurance are not certified.
+    Publish only reviewed public-safe summaries, never raw captures/credentials.
+    Coordinator owns restricted private evidence cleanup after review; local
+    deletion does not remove Kubernetes/collector copies.
+- Limits: cache type/path/size/symlink inventories match, not full-content hashes.
+    Permission checks are not independent new-write/download/remount tests. No
+    new persistence/recovery, precise downtime, concurrency, throughput, hostile-
+    client defense, wider-access, model tool-calling or agent-loop claim. D-015
+    remains CPU/MCP-only; live gateway outage behavior remains deferred.
+- NEXT: coordinator records this review in its execution log and owns eventual
+    explicit-path staging/commit/push after staged-content safety checks. Future
+    separately authorized design must prove exact v1.6.0 fixed-backend support,
+    narrow inference paths and no admin/catch-all route; separately authorized
+    implementation then needs independent gateway behavior/security validation
+    and architectural acceptance. No model route is authorized by this verdict.
+- Rollback/reassess: restore the checked-in default-3 hardened manifest if a
+    diagnostic override recurs, subject to rollout approval. Do not silently
+    return to root/Unconfined, loosen permissions or delete weights/PVCs. A
+    hardening regression, changed image/model/args/CSI/cache layout, permissions
+    or trust/exposure boundary requires stopping affected use and reassessment;
+    the historical insecure baseline is not an accepted steady state.
+- This review inspected governance/profile, current/historical reports, README,
+    architecture/decisions/troubleshooting, coordinator execution records, llama
+    manifest and relevant tests; checked local Git status/history and focused
+    documentation diffs/diagnostics. Modified only STATUS.md, README.md,
+    docs/architecture.md and docs/decisions.md. No delegation, runtime/cloud
+    requests, test reruns, installs, builds, deployment, workload/PVC/network
+    mutation, cleanup, staging, commit or push. Existing dirty work and the
+    coordinator-owned execution log are preserved.
+
+## D-011 Explicit Offload Log Investigation (Tester, 2026-10-27)
+
+- Verdict: explicit CUDA initialization/offloaded-layer gate remains UNSATISFIED.
+    This read-only investigation does not change the Architect verdict above or
+    substitute GPU allocations/configured `-ngl 99` for startup-log proof.
+- Hypothesis/check: missing lines might be outside the earlier time window or
+    suppressed by release logging. Read all retained logs without `--since`:
+    `kubectl --context=aks-agw-lab -n llm logs
+    pod/llama-cpp-74c6bc49b5-6pvtb -c llama-server --timestamps --tail=-1`.
+    Result: 17 lines, first `2026-10-27T19:27:56.065306587Z`, last
+    `2026-10-27T19:27:57.411215010Z`; no CUDA/offload/layer/spawn matches.
+    Earlier tested pod `llama-cpp-74c6bc49b5-75d9c` returns NotFound. Its
+    historical inference evidence remains historical, not a new-pod validation.
+- Current pod started `19:24:42Z`, Ready with zero restarts; imageID is the same
+    manifest digest. Read-only `/proc/1/cmdline`, selected logging environment
+    and `/config/models.ini` confirm unchanged args/four approved presets,
+    `LLAMA_CACHE=/models`, no explicit logging override, and no existing model
+    worker. Full two-stream `/app/llama-server --version` reports
+    `0.7.0-dev (build 11749, commit 1d88cb05f)`, GNU 14.2.0/Linux x86_64.
+- Controlling configuration verified against immutable upstream commit
+    `1d88cb05f1a257f90741538ca3aca6c1b015c6d3`: default verbosity is 3;
+    `common/log.cpp` maps backend INFO/CONT to TRACE=4 and drops messages above
+    the threshold. `common_init` installs that callback; `llama_log_set` also
+    installs it for GGML. CUDA initialization uses GGML_LOG_INFO; explicit
+    `offloaded %d/%d layers to GPU` uses LLAMA_LOG_INFO. Router child stderr is
+    forwarded with LOG (level 0), not suppressed at a router debug threshold.
+    Thus backend INFO suppression, not just a short log window, explains why
+    the deployed setting cannot supply the required lines during normal loads.
+- Supported-release README/parser expose `--log-verbosity 4` (equivalent env
+    `LLAMA_ARG_LOG_VERBOSITY=4`); model workers inherit router options/environment.
+    No retrospective startup-log API was identified in the inspected release
+    docs/source; `--log-file` is an output sink, not recovery of discarded lines.
+    Exact source links and reproduction are in troubleshooting below.
+- Minimal next action for Developer, NOT implemented or authorized here: add
+    only temporary router args `--log-verbosity`, `4`, preserving image, presets,
+    cache, GPU/layer/context settings and endpoints. Deployment uses Recreate,
+    so obtain authorization for interruption/replacement and increased diagnostic
+    logging before applying. Avoid `--verbose`/level 5 and prompt logging.
+- Focused validation after that separate change: verify live threshold 4 and
+    inherited worker args; use README's localhost-only forward and one sequential
+    bounded chat request per approved preset. Capture full startup logs with
+    explicit context/timestamps; correlate each spawn alias/port with CUDA device
+    initialization and actual `offloaded X/Y layers to GPU`, recording observed
+    counts rather than assuming them. Require HTTP 200/nonempty response/positive
+    completion usage. Stop owned forward; Developer may revert temporary logging
+    under the same authorization. No broad suite or forced outage is needed.
+- Cleanup/scope: no forwards or inference clients created; no workload/cloud/PVC
+    changes, installs, capacity/admin operations, commit/push, delegation or
+    execution-log edits. Only STATUS and reusable troubleshooting notes changed;
+    pre-existing dirty work preserved. Separate security/model-route gates remain.
+
+## Independent D-011 Direct Router Validation (2026-10-27)
+
+- FACT (fresh independent Tester, beginning 18:19 UTC): direct router health,
+    configured discovery, all four preset inference requests and observed normal
+    three-model loading behavior passed. This is behavioral VALIDATED evidence,
+    NOT architectural acceptance. Historical Developer results below were not
+    used as proof. Phases 9/10 remain PLANNED; gateway inference, tool calling,
+    agent loops and broader security acceptance were excluded.
+- Target: every Kubernetes command used `--context=aks-agw-lab`; no context
+    switch. Node `aks-gpunp-61997117-vmss000015` Ready, GPU allocatable 1;
+    `llama-cpp-74c6bc49b5-75d9c` remained Running/Ready 1/1, zero restarts.
+    Actual imageID matches the manifest's `sha256:78d05416...7587db` pin.
+    Live pod args and mounted preset match D-011: `--models-preset
+    /config/models.ini --models-max 3 -ngl 99 -c 8192`, `LLAMA_CACHE=/models`,
+    four approved Q4_K_M repositories, existing PVC mounted at `/models`.
+- Health before/after: HTTP 200, `{"status":"ok"}`, 0.831/0.806 seconds.
+    `/v1/models`: HTTP 200, 0.798 seconds; exactly the four approved
+    `source=preset` IDs below, PLUS four `source=cache` repository IDs (eight
+    entries total). An assertion that discovery contains ONLY four IDs would
+    fail; preset-set equality passed. Initially all eight were unloaded.
+- Each captured chat response was valid nonempty JSON, exact assistant content
+    `42`, matching response model, `finish_reason=stop`, HTTP 200 and positive
+    completion usage. Exact prompt: `What is 17 + 25? Reply with only the number.`
+    Parameters: `temperature=0`, `max_tokens=32`, `stream=false`.
+
+| Requested Model | HTTP | Completion Tokens | Captured Client Seconds |
+|---|---|---|---|
+| `qwen2.5-7b-instruct` | 200 | 3 | 0.870104 |
+| `qwen2.5-coder-7b-instruct` | 200 | 3 | 0.766674 |
+| `llama-3.1-8b-instruct` | 200 | 2 | 0.836498 |
+| `phi-4` | 200 | 2 | 0.825445 |
+
+- These are captured WARM requests, not cold-load benchmarks. Initial requests
+    completed model loading/generation in logs, but terminal capture was empty
+    or incomplete (known T-003); request state and absence of a remaining client
+    were checked before warm capture repeats. No 600-second client timeout was
+    observed. Llama's saved transport also reports curl exitcode 0; Phi's initial
+    transport artifact was empty, so its body alone was not counted as HTTP proof.
+    The subsequent Phi response included literal HTTP/1.1 200 headers.
+- Normal fourth-model observation, not an administrative eviction test:
+    discovery showed Qwen/coder/Llama loaded (three), then coder/Llama/Phi loaded
+    (three), Qwen unloaded. Log at `18:24:53.435Z`: `evicting idle LRU
+    name=qwen2.5-7b-instruct for a queued request`. No model administration,
+    stress, concurrency, persistence deletion or forced outage was performed.
+- GPU evidence from the existing pod: before inference, `nvidia-smi` showed
+    63/46791 MiB and no compute processes. After Qwen/coder inference: PIDs
+    134/220, `/app/llama-server`, 5398 MiB each, total 10862 MiB. At 18:27:17 UTC:
+    coder PID 220 (5398 MiB), Llama PID 314 (6190 MiB), Phi PID 401 (10738 MiB),
+    total 22394 MiB. Read-only `/proc/{220,314,401}/cmdline` maps exact aliases
+    and `--n-gpu-layers 99`; their maps contain `libggml-cuda.so`, `libcuda.so`
+    and `libcudart.so`. This supports GPU-backed inference, not just allocation.
+    Explicit CUDA initialization/offloaded-layer counts were NOT present in the
+    inspected current logs; exact layer counts remain unverified. Structured
+    `nvidia-smi --query-compute-apps=pid` returned `Insufficient Permissions`;
+    ordinary `nvidia-smi` worked. No privilege change or diagnostic pod was used.
+- Scoped exposure/security observation: private ClusterIP:8080, no external IP,
+    no `llm` Ingress/NetworkPolicy; expected GPU selector/both taint tolerations,
+    GPU request/limit 1, no host network/host port, token automount false and
+    token absent. Runtime UID/GID 0, CapEff=0, NoNewPrivs=1, Seccomp=0; root,
+    absent seccomp and unauthenticated/unisolated HTTP remain residuals, not
+    remediated or accepted by this test. No Secrets were read.
+- Reproduce: README direct-inference guide using owned localhost-only
+    `kubectl --context=aks-agw-lab -n llm port-forward --address 127.0.0.1
+    service/llama-cpp 18080:8080`; health/discovery `curl --noproxy '*' --max-time
+    10`; repeat its exact chat JSON for each table ID with `--max-time 600`.
+    Runtime diagnostics: `kubectl --context=aks-agw-lab -n llm logs
+    pod/llama-cpp-74c6bc49b5-75d9c -c llama-server --since=20m --timestamps`
+    and `kubectl --context=aks-agw-lab -n llm exec
+    llama-cpp-74c6bc49b5-75d9c -c llama-server -- nvidia-smi`. Read-only live
+    ConfigMap, Service, EndpointSlice, node/pod and `/config/models.ini` checks
+    established configuration/placement separately from inference.
+- Cleanup PASS: owned forward PID 63839 stopped; `lsof -nP -iTCP:18080
+    -sTCP:LISTEN` found no listener, and process inspection found no remaining
+    matching inference client/forward. Temporary response artifacts were outside
+    the repo. No cloud/workload/PVC mutation, installs, build/push, commit/push,
+    further delegation or execution-log edit. Existing dirty tree preserved;
+    only STATUS and the reusable troubleshooting entry were edited.
+- Handoff at test completion: Architect acceptance was pending. The current
+    bounded verdict above supersedes that pending state, not the test's limits
+    or missing gates. Coordinator owns the agent execution log.
+
+## Fresh GPU Prerequisite Observation (2026-10-27)
+
+- FACT: explicit-context, read-only `kubectl --context=aks-agw-lab` checks show
+    GPU node `aks-gpunp-61997117-vmss000015` Ready with `nvidia.com/gpu: 1`
+    allocatable. Pod `llama-cpp-74c6bc49b5-75d9c` is Running, Ready 1/1, with
+    zero restarts on that node (age 11h at observation).
+- This supersedes the older operator-reported GPU absence below. Node/pod
+    readiness does not establish current GPU execution or successful inference;
+    no health request, model loading, inference or runtime GPU check was performed.
+- NEXT at that observation (superseded by independent results above): validate direct router-mode inference for all four
+    presets and actual GPU execution under D-011, then seek architectural
+    acceptance before implementing any gateway model route. Follow README's
+    direct-inference guide; no capacity or deployment changes are needed for
+    the prerequisite check. D-015's live gateway outage test remains deferred.
 
 ## What this project is
 
@@ -24,7 +730,57 @@ Details: [docs/architecture.md](docs/architecture.md). Rationale: [docs/decision
 - DECISION: the intended publication should complement abhisingh.org's agent-harness series by explaining component responsibilities and real service integration, not showcasing code complexity. No portfolio article or harness integration has been implemented in this repository.
 - FACT (2026-10-23): the human confirms understanding of the revised code and is ready for the next learning stage. README preserves the whole-file flow, lifecycle/yield explanation, tool annotations and their security limitations. That learning-stage confirmation alone did not authorize deployment; the subsequent bounded authorization below supersedes it, not the LOCAL acceptance limits.
 
-## Active request: deploy the MCP Kubernetes component
+## Current D-015 Architectural Acceptance
+
+- DECISION (Architect, 2026-10-23): ACCEPT the deployed CPU-only control plane
+    and observed gateway/MCP submilestone as bounded VALIDATED for continued
+    trusted, supervised, single-operator use. Phase 8 deployment/reconciliation
+    and MCP interoperability are accepted; Phase 9 model integration and Phase 10
+    end-to-end inference remain PLANNED. This is not full D-015 outage acceptance.
+- Independent basis: coordinator-maintained CPU-only section of
+    [docs/agent-execution-log.md](docs/agent-execution-log.md) records actual
+    Architect, Developer, Tester and Security Reviewer invocations. Tester:
+    full live suite **68 PASS in 26.76s**, gateway offline 3 PASS, focused MCP
+    failure/deadline/probe 4 PASS, live gateway 5 PASS in 13.24s, supplemental
+    direct MCP 9 PASS. Existing environment only; bytecode/cache writes disabled.
+- Accepted observations: official v1.6.0 releases/Established CRDs; current
+    generation 1 class, Gateway/listener, route and backend conditions; Ready,
+    zero-restart app-pool controller/proxy/MCP; pinned imageIDs listed below;
+    ClusterIP-only proxy port 8080, exact /mcp and one static StreamableHTTP
+    Stateless/unprefixed upstream. SDK 1.30.0/protocol 2025-11-25: two sessions,
+    exactly two argument-free tools, repeated structured calls, no session ID,
+    direct MCP matches. Gateway foreign Origin 403/seven unrelated paths 404;
+    direct probes/Host/Origin 200/421/403. Foreign inbound Gateway Host is accepted;
+    upstream MCP Host validation is NOT a gateway caller-Host boundary.
+- Scope adjustment: health was healthy/health_ok/200 throughout. Existing offline
+    source failure tests prove MCP independence ONLY, not deployed gateway outage
+    behavior. D-015 Gate C's live unavailable-upstream portion is DEFERRED, not
+    passed. Later record independent gateway SDK discovery/overview/bounded health
+    plus direct MCP probe evidence during an authorized or naturally occurring
+    outage; do not disrupt/reconfigure the upstream just to complete this gate.
+- Security condition: runtime Security Reviewer conditional GO applies only to
+    unchanged trusted supervised use. Human's explicit "Accept reviewed permissions
+    and deploy" supersedes historical holds. HIGH controller cluster-wide Secret
+    reads/other authority remain ACCEPTED, NOT REMEDIATED; scoped writes do not
+    narrow reads. MEDIUM plaintext/unauthenticated access and MCP reflection,
+    LOW availability remain. TLS xDS, audience-scoped read-only proxy token/CA,
+    proxy Secret-read denial, MCP token absence and admitted hardening verified;
+    no rotation/invalid-token rejection/process-level/whole-image certification.
+- NEXT: human may use README's localhost gateway forward and SDK checks; stop
+    their forward afterward. Reassess before changing trust, permissions, targets
+    or exposure. Fresh 2026-10-27 D-011 evidence/verdict above supersedes the older
+    GPU-absence report. D-011 historical offload/final-runtime/security gates are
+    cleared within bounded ACCEPT; separate exact-release model-route design/
+    security proof and authorization remain. Healthy /health alone proves neither GPU availability nor inference.
+    D-015 itself did not investigate GPUs.
+- This acceptance inspects repository/recorded reports only: no runtime tests,
+    agents, cluster/cloud changes, installs, commit or push. Base is already
+    committed 8c80d03. Tester-owned 18151/18152 forwards removed; 18000 also free
+    at recorded cleanup. Current edits are limited to four acceptance documents;
+    coordinator owns the execution log. Historical execution scopes below remain
+    history, not current installation prohibitions.
+
+## D-014 MCP Deployment And Acceptance (Historical Execution)
 
 - OPERATOR EVIDENCE (2026-10-23): human ran curl `tools/call` for
     `get_model_health` through localhost:18000 and supplied the JSON-RPC response:
@@ -169,8 +925,9 @@ Details: [docs/architecture.md](docs/architecture.md). Rationale: [docs/decision
     command must retain explicit `--context=aks-agw-lab`; do not switch context.
 - Future: retain D-013 enforced operator-only and gateway-only phases; reassess
     enforcement and allow/deny tests when resumed. Cilium migration is deferred,
-    not approved for execution. Gateway remains PLANNED/paused; D-011 independent
-    router validation still precedes integration.
+    not approved for execution. Gateway remains PLANNED; the later D-015 request
+    resumes CPU-only work. D-011 independent router validation still precedes
+    model integration, not MCP routing.
 - FACT: registry, image publication, local/runtime checks and MCP deployment
     are evidenced above. No NetworkPolicy, Cilium migration, gateway installation,
     public application exposure, Git commit or push occurred. Historical
@@ -208,18 +965,158 @@ MCP endpoint while forwarding: `http://127.0.0.1:18000/mcp` (not a web page).
 There is no public application URL. Overview revision 2026-10-22.1 remains
 historical static teaching data, not live inventory; no rebuild is required.
 
+## D-015 Gateway/MCP (DEPLOYED; Developer Evidence)
+
+- Latest authority: human selected **Accept reviewed permissions and deploy**
+    after the independent preinstallation Security Reviewer finding. D-015 records
+    acceptance of HIGH cluster-wide Secret reads and reviewed controller authority,
+    not remediation or new Azure IAM. Historical installation holds below are
+    superseded by that disposition. No additional agents/delegation authorized.
+- CREATED: annotated controller values, parameters applied before Gateway, one
+    exact `/mcp` route and static StreamableHTTP backend, focused offline/opt-in
+    SDK checks. Images resolved from official v1.6.0 indexes and digest pinned.
+    First focused tests: 3 PASS; exact controller render confirms app placement,
+    ClusterIP, TLS-only xDS, hardening and resources. No MCP/GPU/llama changes.
+- Read-only preflight: explicit context aks-agw-lab; Ready untainted app node
+    aks-app-42647623-vmss000000 (AMD64), 3860m CPU/12074728Ki allocatable,
+    existing requests 1335m/2004Mi. Two 100m/128Mi workloads fit. No gateway CRDs,
+    namespace, release or matching RBAC objects present. Existing operator
+    `auth can-i '*' '*' --all-namespaces` returned yes; no operator grant added.
+    AKS Running/Succeeded, Azure networking, networkPolicy none. No Azure mutation.
+- Tool limitation: deferred loader unavailable; explicit-context terminal
+    kubectl/Helm used. Helm 4 rejected obsolete `list --all`; corrected to
+    `list --all-namespaces`. A guessed chart template path did not exist; actual
+    templates inspected instead. Both were local read-only failures.
+- DEPLOYED: standard Gateway API v1.6.0 bundle (10 CRDs and official CRD
+    safe-upgrade admission policy/binding, all previously absent); agentgateway
+    v1.6.0 CRDs (4) and controller Helm releases revision 1. Namespace/controller
+    render and all custom resources passed server dry-run. Controller and proxy
+    rollouts completed. `lab-internal` parameters were applied BEFORE Gateway.
+    Complete local suite before install: 66 PASS, 2 opt-in live tests skipped.
+- FACT: controller `agentgateway-657866fcbf-9ctzr` and proxy
+    `agentgateway-proxy-79f4976fcb-86d9n` Ready, zero restarts, UID 10101 on
+    `aks-app-42647623-vmss000000`. Both requests 100m/128Mi, limits 500m/512Mi;
+    nonroot/read-only/drop ALL/no escalation/RuntimeDefault in admitted pod specs.
+    No GPU requests/tolerations/host networking/host ports. Controller ClusterIP
+    ports 9978/9093/9092; proxy ClusterIP port 8080 only; no external IPs.
+- FACT: generation 1 matches observedGeneration throughout: GatewayClass
+    Accepted, Gateway Accepted/Programmed, listener Accepted/Programmed/ResolvedRefs,
+    HTTPRoute Accepted/ResolvedRefs and backend Accepted. Class controller name is
+    agentgateway.dev/agentgateway. One same-namespace exact `/mcp` route and one
+    static lab-info.mcp.svc.cluster.local:80/mcp destination; no model/admin route.
+- Live image references, both v1.6.0 indexes pinned and observed as imageIDs:
+    `cr.agentgateway.dev/controller@sha256:d84259a7e2d87f8f39bae385d4b032d823c0a4450aecb32e0e31e2258449645b`;
+    `cr.agentgateway.dev/agentgateway@sha256:9d3e6044ddcdc0878b1787f77bd401252b95e22684203fb5e874c4c42d2ed90c`.
+    Exact chart/bundle hashes, reproduction commands and rollback are in README.
+- FACT: controller's native API token retained; HTTPS xDS to controller FQDN:9978
+    uses self-managed certificate Secret `kgateway-xds-cert` and proxy read-only CA plus projected
+    token (audience agentgateway, requested 43200s). Proxy generic automount false;
+    `auth can-i get secrets --all-namespaces --as=system:serviceaccount:agentgateway-system:agentgateway-proxy`
+    returned no (expected exit 1). Reviewed controller read authority is unchanged;
+    scoped deployer RoleBinding only in agentgateway-system. No Azure/operator
+    grant added. Only token/Secret reference metadata inspected, never values.
+- FACT: `GATEWAY_TEST_URL=http://127.0.0.1:18000/mcp .venv/bin/python -m pytest -q -s tests/test_gateway.py`
+    5 PASS in 13.31s. Python 3.12.15/MCP 1.30.0; official SDK negotiated
+    2025-11-25, initialized twice, listed exactly get_lab_overview/get_model_health
+    with no arguments, called both twice per initialization, structured results,
+    no session ID. Foreign Origin 403; /, /health, /healthz, /readyz, /mcp/,
+    /v1/models, /metrics all 404. No allowlist or Origin rewriting changed.
+- FACT: live health returned healthy/health_ok/200, contrary to expected upstream
+    absence; this does NOT prove inference or GPU availability. No GPU/Spot/pool
+    investigation, llama.cpp restart/PVC mutation or manufactured live failure.
+    Existing deterministic local tests cover MCP unavailable-upstream independence;
+    gateway-specific unavailable-upstream evidence is not established.
+- FACT: direct MCP pod lab-info-6856dddf7-zdrrn, exact image digest, zero restarts,
+    hardening/allowlists/fixed health target unchanged. In-pod loopback probes 200,
+    foreign Host 421/Origin 403, API token absent. First one-off assertion expected
+    Origin 400 and FAILED; corrected expected 403 and same check passed. No runtime
+    fix was needed. Bounded proxy logs contain request/path/tool metadata, not
+    observed bodies/prompts/credentials; this is not comprehensive certification.
+- Final complete suite with live gateway checks:
+    `GATEWAY_TEST_URL=http://127.0.0.1:18000/mcp .venv/bin/python -m pytest -q`:
+    **68 PASS in 27.22s**. Prior default suite 66 PASS/2 opt-in skips. No dependency
+    installation, public Python feed, commit/push or additional delegation.
+- Files modified by this execution: k8s/gateway/controller-values.yaml,
+    k8s/gateway/parameters.yaml, k8s/gateway/gateway.yaml, tests/test_gateway.py,
+    README.md, STATUS.md, docs/architecture.md, docs/troubleshooting.md.
+    Inspected constitution, repository/developer instructions, D-015, MCP manifest,
+    existing tests/pyproject, exact v1.6.0 chart values/templates/CRD schemas and
+    generated proxy helper. Existing five dirty documentation changes preserved;
+    coordinator-owned docs/agent-execution-log.md was not edited. An unrelated
+    infra/registry.bicep change appeared during execution and was left untouched.
+- HISTORICAL NEXT (completed except deferred live outage test): independent Tester (including gateway failure semantics when naturally
+    available, not production disruption), runtime Security Reviewer and Architect
+    acceptance. Continue trusted supervised use only. Independent D-011 router
+    acceptance still gates any model route; README direct-inference guide preserved.
+- Cleanup COMPLETE: execution-owned localhost forward terminated, port 18000
+    confirmed free; no disposable container was created. Deployed private gateway
+    remains running. Final condition/placement/Service snapshot unchanged, zero
+    restarts; `git diff --check` and editor diagnostics for all four source files
+    passed. Only Secret names/types were listed to confirm the self-managed cert;
+    no release Secret payload, token, kubeconfig or certificate key was output.
+- This is DEPLOYED, not independently VALIDATED. Tester/runtime Security
+    Reviewer/Architect acceptance remain coordinator-owned follow-up gates.
+
 ## Current phase
 
-Phase 8: install agentgateway v1.6.0 on the `app` pool and validate the control plane. Before Phase 9, get an independent Tester pass on the router-mode llama.cpp (D-011), because the gateway must not be wired to an unvalidated upstream.
+Phase 8: agentgateway v1.6.0 deployment/control plane and observed MCP path are
+bounded VALIDATED on the existing CPU `app` pool; live gateway outage validation
+is explicitly deferred above. D-011 has final bounded ACCEPT, including historical
+explicit offload and final-runtime/security prerequisites. Separate model-route
+design/security proof and authorization remain. Phases
+9/10 stay PLANNED; no llama.cpp route is authorized by this review.
 
-Gateway implementation remains paused. The human authorized building the
-Python lab-information MCP server. Architect reviewed the bounded local-first
+The latest human request authorizes gateway implementation, superseding the
+historical gateway pause, not the exposure/security or infrastructure limits.
+The earlier Architect assignment was documentation-only; subsequent Developer
+deployment/evidence above supersedes its planning-only state.
+Fresh independent evidence (2026-10-27) supersedes the 2026-10-23 GPU-absence
+report: Ready GPU node, allocatable GPU and successful direct inference observed.
+This review made no new runtime request; the snapshot is not a Spot availability
+guarantee. Do not change GPU SKU, capacity or node counts.
+CPU-only gateway/MCP work does not require a GPU; unavailable upstream
+health must remain a normal bounded tool result, not a gateway-readiness gate.
+
+The human previously authorized building the Python lab-information MCP
+server. Architect reviewed the bounded local-first
 design (D-012). Architect accepts the two-tool teaching LOCAL source milestone
 against its amendment and recorded independent Tester/Security evidence.
 This supersedes the historical three-tool/54-test acceptance for current source,
 not its stronger response-protection guarantees. The approved Python feed restriction remains
 in force. D-014 container/cluster hosting is separately VALIDATED and architecturally
 accepted only for the trusted supervised single-operator lab. Public exposure is not authorized.
+
+### Historical Architect Gateway Handoff (D-015; PLANNED at review time)
+
+- Preserved coordinator-owned README addition: direct llama.cpp health, discovery,
+    all-four-preset inference and CUDA-offload checks when GPU capacity returns.
+    Manual checks do not replace independent D-011 acceptance.
+- Official Helm/static-MCP/API/overlay/TLS sources reviewed; actual v1.6.0
+    controller values and both chart renders inspected offline. MCP target
+    StreamableHTTP/stateless/unprefixed fields and proxy overlays exist in the
+    exact CRD chart. Corrected controller `nodeSelector.workload=app` renders;
+    `controller.nodeSelector` is silently ignored and must not be used.
+- Implementation contract and recommended artifacts/values are in
+    [D-015](docs/decisions.md#d-015-cpu-only-gateway-and-mcp-first-2026-10-23-planned).
+    Annotate all future YAML/shell/tests with workload contracts, ownership,
+    trust limits and failure behavior, not language-syntax lessons.
+- HISTORICAL DEPLOYMENT HOLD (cleared by later human disposition above): scoped write RoleBinding does not remove controller-wide
+    Secret reads, TokenReview and cluster-scoped management/status authority.
+    Independent security assessment plus explicit human RBAC disposition is
+    required before install. Preserve authenticated TLS xDS and required proxy
+    token projection; MCP stays token-free. No silent privilege expansion.
+- Next: Developer prepares bounded annotated CPU-only artifacts and renders;
+    permission/security gate before mutation; Tester independently exercises real
+    SDK through gateway including unavailable upstream; Security Reviewer reviews
+    actual runtime; Architect accepts only that evidenced MCP path. This assignment
+    invokes no additional agents; the coordinator owns execution logging.
+- Checks in this Architect assignment: `git status --short` initially only README
+    dirty; HEAD/origin main `8c80d03`; recent history inspected. `helm show values`
+    and offline controller/CRD `helm template` succeeded. First status edit passed
+    scoped `git diff --check`. `rg` was unavailable; existing file/read tools used.
+    Source 63 PASS is prior evidence, not rerun here. No Kubernetes/cloud operation,
+    install/deploy, context switch, image build, commit or push. Changed only STATUS,
+    architecture and decisions; README and execution log left untouched.
 
 ## Phase tracker
 
@@ -232,8 +1129,8 @@ accepted only for the trusted supervised single-operator lab. Public exposure is
 | 4 | NVIDIA/Kubernetes GPU validation | VALIDATED (independent Tester, 5/5 checks) |
 | 5 | Model storage strategy | VALIDATED (D-009: Azure Disk PVC, persistence tested) |
 | 6 | llama.cpp deployment | VALIDATED |
-| 7 | Direct llama.cpp inference validation | VALIDATED (independent Tester, 6/6 checks) |
-| 8 | agentgateway deployment | PLANNED |
+| 7 | Direct llama.cpp inference validation | VALIDATED (2026-10-27 final bounded D-011 ACCEPT); historical explicit offload and final hardened runtime accepted; single-model 6/6 historical |
+| 8 | agentgateway deployment | VALIDATED (bounded CPU-only control plane + observed MCP path; live outage test deferred) |
 | 9 | agentgateway -> llama.cpp integration | PLANNED |
 | 10 | End-to-end inference validation | PLANNED |
 | 11 | Security review and hardening | PLANNED |
@@ -247,13 +1144,13 @@ accepted only for the trusted supervised single-operator lab. Public exposure is
 | `scripts/preflight.sh` | CREATED | Checks standard family quota only; does not know about the Spot route (needs update). `--resource-type` speedup unverified. |
 | `infra/main.bicep` | DEPLOYED | CPU pools + Spot GPU pool (managed 128 GB OS disk) |
 | `scripts/up.sh`, `status.sh`, `env.sh` | DEPLOYED (used) | `down.sh` CREATED, never exercised |
-| AKS `aks-agw-lab` (rg `rg-aks-agw-lab`, southeastasia, v1.36.4) | DEPLOYED | system, app, gpunp pools all Succeeded |
-| GPU node `gpunp` (Spot) | DEPLOYED | Ready, taints `sku=gpu:NoSchedule` + `kubernetes.azure.com/scalesetpriority=spot:NoSchedule`, label `workload=gpu-inference` |
-| NVIDIA device plugin (`k8s/gpu/nvidia-device-plugin.yaml`) | DEPLOYED | Runs privileged (T-007); node advertises `nvidia.com/gpu: 1` |
+| AKS `aks-agw-lab` (rg `rg-aks-agw-lab`, southeastasia, v1.36.4) | DEPLOYED | CPU gateway/MCP accepted; independent 2026-10-27 Ready GPU/inference snapshot, not future availability |
+| GPU node `gpunp` (Spot) | VALIDATED at independent 2026-10-27 observation | Ready, allocatable GPU 1 and inference worker allocations; Spot availability remains best effort |
+| NVIDIA device plugin (`k8s/gpu/nvidia-device-plugin.yaml`) | DEPLOYED | Privileged (T-007); GPU advertisement/allocation observed 2026-10-27, no new plugin security certification |
 | GPU smoke test (`k8s/gpu/gpu-smoke-test.yaml`) | VALIDATED (historical independent GPU checks) | Tester confirmed GPU allocation, execution and scheduling isolation; see Phase 4 evidence. No fresh cluster check this session. |
-| llama.cpp (`k8s/llm/llama-cpp.yaml`) | DEPLOYED, router mode with 4 models (D-011); single-model version was VALIDATED | Router change tested by Developer only; needs an independent Tester pass. agentgateway path NOT validated |
-| agentgateway | PLANNED | |
-| Python lab-information MCP server | VALIDATED (D-014 trusted supervised single-operator lab only) | Architect ACCEPT: Tester 63 PASS plus deployed SDK/runtime checks; Security Reviewer bounded GO with accepted residuals. Dedicated ACR and digest-pinned app-pool replica; no gateway or network isolation. |
+| llama.cpp (`k8s/llm/llama-cpp.yaml`) | VALIDATED (2026-10-27 final bounded D-011 ACCEPT) | Four presets, historical explicit offload, final hardened runtime and max-three behavior accepted; gateway path NOT implemented/validated |
+| agentgateway | VALIDATED (bounded D-015) | CPU control plane + observed MCP path accepted; live upstream-outage gateway test deferred; no model route or network isolation |
+| Python lab-information MCP server | VALIDATED (D-014 trusted supervised single-operator lab only) | D-014 acceptance retained; D-015 independently confirms unchanged direct MCP and observed gateway interoperability, not live outage behavior or isolation |
 
 ## Current handoff: MCP learning requirements
 
@@ -440,12 +1337,14 @@ GPU (2026-10-20, reproduce with `kubectl apply -f k8s/gpu/gpu-smoke-test.yaml &&
 
 ## Blockers
 
-MCP Python dependency blocker is resolved through the approved feed only.
-Container build/run still needs a running local Docker daemon; independent
-LOCAL two-tool behavioral/security reviews and Architect acceptance are complete
-for supervised loopback only; no blocker remains for that local source milestone.
-Container/Linux runtime and packaging provenance are not accepted. See D-012
-and final independent evidence above. Existing infrastructure risks:
+MCP dependency/packaging/deployment prerequisites were resolved within bounded
+D-014 acceptance; D-015 accepts only observed CPU/gateway/MCP behavior. Neither
+is whole-image or production certification. D-011's explicit historical CUDA/
+offload and final-runtime/security prerequisites are cleared within bounded
+ACCEPT. Remaining model-route blockers are exact v1.6.0 fixed-backend/narrow-path
+design/security proof and separate implementation authorization; independent
+gateway validation/acceptance follows implementation. Live gateway outage
+evidence remains deferred. Infrastructure risks:
 1. Spot eviction can delete the GPU node at any time (D-008); the pool autoscaler (min=max=1) tries to replace it but capacity is best effort.
 2. The device plugin runs privileged (T-007); needs review.
 
@@ -461,7 +1360,10 @@ and final independent evidence above. Existing infrastructure risks:
 
 ## Repository notes
 
-- Earlier lab/governance/explanatory commits were pushed. Current MCP implementation, simplification, commenting-policy and handoff changes have not been committed or pushed during this work; do not treat earlier commit authorization as authorization for them.
+- Current base `8c80d03` (HEAD/main and origin/main at inspection) already commits
+    the deployed two-tool MCP MVP. Earlier no-commit/no-push execution statements
+    are historical, not a claim that this base is uncommitted. D-015 working-tree
+    changes remain uncommitted; no commit/push is authorized or performed now.
 - `main.py` and `pyproject.toml` now implement the D-012 MCP server; `.python-version` retains the Python 3.12 baseline.
 - Failed GPU pools were deleted (they were our own failed artifacts). No other resources were deleted.
 
@@ -479,10 +1381,31 @@ adds `config/lab-info.json`, `tests/test_lab_mcp.py`, `uv.lock`, `Dockerfile`,
 
 ## Plan (remaining)
 
-1. Phases 8-10: agentgateway v1.6.0 on the `app` pool; `Gateway`, `AgentgatewayBackend`, `HTTPRoute`; end-to-end request via port-forward.
+1. Phase 8's CPU deployment/control plane and observed MCP path are accepted;
+    defer independent live gateway outage evidence as specified at the top.
+    Phases 9-10 remain PLANNED: D-011 prerequisites have final bounded clearance;
+    exact v1.6.0 fixed-backend/narrow-inference-path design/security proof and
+    separate authorization must precede bounded Developer route work.
+    Independent gateway inference validation/acceptance follows implementation.
 2. Phase 11-12: Security Reviewer pass (privileged plugin, public API server, Spot, unauthenticated llama-server, no NetworkPolicy); teardown and rebuild test; update `preflight.sh` for Spot; test Spot eviction recovery.
 
 ## Next action
+
+Use README's localhost gateway forward/SDK guide for continued supervised use;
+stop the forward afterward. No local endpoint is always running. Preserve the
+accepted trust boundary and defer live outage testing without disruptive changes.
+Coordinator next records final D-011 bounded acceptance and owns publication:
+stage explicit reviewed paths, exclude private/raw diagnostics and check staged
+content before eventual commit/push. No staging/commit/push occurred here.
+Next technical work requires separately authorized exact v1.6.0 fixed-backend/
+narrow-inference-path design/security proof, then separately authorized Developer
+route work and independent gateway validation. No route or capacity change is
+authorized here; bounded prerequisite clearance is not Phase 9/10 completion.
+
+### Historical Teaching-Revision Handoff (Superseded By D-014/D-015)
+
+The following captures that earlier documentation-only execution, not current
+packaging/deployment gates or an active gateway installation hold:
 
 Next: walk through Kubernetes workload/Service wiring and gateway responsibilities
 in a separate 10-15 minute teaching segment. The human confirms code understanding;

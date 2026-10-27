@@ -63,12 +63,102 @@ Format: context, options, decision, rationale, tradeoffs, revisit conditions.
 
 ## D-011 llama.cpp runs in router mode with several models (accepted, 2026-10-20)
 
+### Bounded gate-resolution authorization (human, 2026-10-27)
+
+- Exact human selections supplied by the coordinator: **"Approve bounded
+	diagnostic and hardening"** and **"Accept bounded lab risks"**.
+- Approved: brief Recreate interruption; temporary verbosity 4 with public
+	arithmetic only; compatibility-tested non-root/RuntimeDefault; narrowly
+	scoped cache permission repair within the existing model volume only if
+	required, preserving weights and without broad writable permissions.
+- Accepted ONLY for future private, single-supervised-operator lab use:
+	plaintext/unauthenticated HTTP, unrestricted cluster reachability, including
+	direct backend model-administration and resource/state-abuse access, and
+	absent confidentiality. All workloads and local users must be trusted;
+	synthetic/public data only. This acceptance expires BEFORE shared access,
+	a new untrusted workload, wider exposure or a target change. Re-review then.
+- This authorizes NO model route. Phases 9/10 remain PLANNED. Independent
+	Tester evidence, Security Reviewer review and architectural disposition
+	remain separate gates; Developer checks cannot certify acceptance.
+- Implementation choice: numeric UID/GID 10001, RuntimeDefault and supported
+	`fsGroup: 10001` / `OnRootMismatch` for the existing Azure Disk PVC. CSI
+	reports `fsGroupPolicy: File`; first mount may change group/permission
+	metadata inside that volume, not weight contents. No root init container,
+	manual recursive chown or world-writable repair is introduced. Actual cache,
+	child-worker and CUDA compatibility must be observed after admission.
+- Diagnostics are threshold 4, never 5, with no keys/private traffic; level 4
+	is NOT generally payload-safe. Restore default threshold 3 after capture.
+- Developer outcome: non-root/RuntimeDefault rollout and all four diagnostic
+	arithmetic requests passed; supported fsGroup handling alone supplied cache
+	access, so no additional permission repair was necessary. Actual directories
+	are root:10001 2775 (lost+found 2770), not world-writable. Exact observed
+	offloaded counts are 29/29, 29/29, 33/33 and 41/41, with CUDA initialization
+	correlated by alias/child port. Default 3 was restored in the final rollout.
+	These observations support the implementation choice, not independent review
+	or route clearance. Cache file-size/path/symlink inventory was unchanged;
+	no full weight checksum/persistence certification is implied.
+
+
 - Context: the human wants to choose between several models (a Qwen coder, a Phi, a Llama) from the Pi client, not just one. Only one `nvidia.com/gpu` unit exists, so one pod per model does not work (a second GPU pod stays Pending).
 - Options: (a) router mode, one pod, models loaded on demand from the shared PVC; (b) one Deployment per model with GPU time-slicing in the device plugin; (c) keep single-model and redeploy to switch.
 - Decision: (a). `llama-server --models-preset /config/models.ini --models-max 3 -ngl 99 -c 8192`; preset in ConfigMap `llama-models-preset`. Models (all verified ungated with a single Q4_K_M file): `qwen2.5-7b-instruct`, `qwen2.5-coder-7b-instruct`, `llama-3.1-8b-instruct` (bartowski/Meta-Llama-3.1-8B-Instruct-GGUF, Llama 3.1 community license), `phi-4` (bartowski/phi-4-GGUF, MIT). Model id in requests = preset section name. Memory limit raised to 48Gi.
 - Rationale: one GPU unit, no sharing config, new models are one ConfigMap entry, files persist on the PVC (D-009).
 - Tradeoffs: first request to a model downloads and loads it (minutes); switching models reloads weights; with `--models-max 3` the least recently used model is unloaded. The router API exposes model download/delete endpoints (`POST/DELETE /models`), so it must stay ClusterIP or localhost only (Phase 11). Pi's built-in llama.cpp provider (`/llama`) should also work against a router, but only the OpenAI-compatible `models.json` route is used so far.
 - Revisit: if load latency hurts, or when agentgateway routing (D-006) needs a model-name mapping.
+
+### Current architectural acceptance (2026-10-27; bounded ACCEPT)
+
+Decision: ACCEPT D-011 as bounded VALIDATED, clearing its model prerequisite,
+including the explicit initialization/offload and final-runtime/security gates.
+The earlier partial acceptance/holds remain historical in STATUS and the
+coordinator execution log; they are superseded for the resolved gates only.
+
+Context/evidence: independent Tester nine gates PASS and existing suite 66 PASS/
+2 live-gateway SKIP; final four HTTP 200/exact `42`/matching-model responses with
+completion usage 3/3/2/2, health ok, four preset plus four cache IDs and normal
+max-three/LRU. Same pinned build 11749/1d88cb05f; Ready/zero restarts; router and
+resident workers UID/GID 10001, RuntimeDefault/Seccomp 2, all capabilities zero,
+NoNewPrivs 1, no token, default verbosity 3. fsGroup 10001 alone supplied cache
+access without root init/manual repair/world-write. Final independent Security
+Reviewer GO confirms remediation and the explicit human risk disposition.
+
+Options: retain the hold until another final-pod verbosity-4 rollout; equate
+historical logs with fresh final-pod startup; or accept independently corroborated
+historical initialization/counts plus separate final-runtime evidence. Choose
+the third. Tester correlated alias/repository/child port/CUDA and actual Qwen
+29/29, Coder 29/29, Llama 33/33, Phi 41/41. Retained ReplicaSets differ only by
+trailing verbosity 4; surviving events corroborate the diagnostic capture window.
+This satisfies the original explicit log gate without a reassurance-only rerun.
+Tradeoff: diagnostic pod is deleted, so no fresh retrieval/tamper-proof chain or
+fresh final-pod exact-layer measurement follows. `-ngl 99` remains configuration,
+not offload proof. Cache inventories match type/path/size/links, not full hashes;
+independent permission checks are not new-write/download/remount/recovery tests.
+
+Accepted HIGH risks are NOT fixed: plaintext/unauthenticated/unrestricted HTTP,
+direct administration and resource/state abuse, with controller Secret reads/
+TokenReview separately accepted in D-015. Trust/expiry is exactly the human
+authorization above, including local users; no shared/customer/production use.
+MEDIUM logging confidentiality remains: default-3 warning paths may expose
+output and temporary 4 is not generally safe. Collector access/retention and
+whole-image/log certification remain unverified. Only reviewed public-safe
+summaries may be published; restricted raw artifacts remain outside Git until
+coordinator cleanup after review, which cannot purge remote collector copies.
+
+Phases 9/10 remain PLANNED. No route implementation/deployment is authorized.
+Future separately authorized design must prove exact v1.6.0 fixed-backend support,
+narrow inference paths and no admin/catch-all; implementation needs separate
+authorization, independent gateway behavior/security validation and acceptance.
+D-015 remains CPU/MCP-only with live outage deferred. No new persistence/recovery,
+throughput, wider-access, model tool-calling or agent-loop claim follows.
+
+Revisit BEFORE sharing/new untrusted workloads or local users/wider exposure/
+target change, or on changed image/model/args/permissions/CSI/cache layout or
+hardening regression. Stop affected use and reassess; restore default-3 hardened
+configuration under rollout approval, never silently root/Unconfined or broad
+permission repair. Preserve weights/PVCs. The insecure baseline is not an
+accepted steady state. Coordinator owns publication/staged-content checks and
+execution logging. This is recorded-evidence/repository review only: no new
+runtime/cloud requests, tests, implementation or deployment.
 
 ## D-012 Python lab-information MCP server (LOCAL source accepted, 2026-10-22)
 
@@ -515,6 +605,237 @@ documentation-only review. Reports: [agent-execution-log.md](agent-execution-log
 	in [README.md](../README.md); no public application URL or running local forward
 	is claimed. Overview revision 2026-10-22.1 remains historical static teaching
 	data, not deployment inventory. D-012 LOCAL acceptance/history is unchanged.
+
+<a id="d-015-cpu-only-gateway-and-mcp-first-2026-10-23-planned"></a>
+
+## D-015 CPU-only gateway and MCP first (2026-10-23; bounded VALIDATED)
+
+Current cross-reference (2026-10-27): D-011 above now has bounded direct-router
+ACCEPT with explicit historical offload and final-runtime/security prerequisite
+clearance, superseding older GPU-absence/pending-evidence statements below.
+Separate model-route design/security proof and authorization remain; Phases 9/10 stay PLANNED.
+D-015 acceptance remains CPU/MCP only, with live gateway outage behavior deferred.
+No model-route authorization or expanded security acceptance follows.
+
+### Final architectural disposition (2026-10-23)
+
+ACCEPT Phase 8 deployment/control-plane and observed CPU-only gateway/MCP
+interoperability for unchanged trusted, supervised, single-operator lab use.
+The coordinator's CPU-only execution log records independent Tester 68 PASS in
+26.76s, live gateway 5 PASS in 13.24s, offline gateway 3 PASS, focused MCP failure/
+deadline/probe 4 PASS and supplemental direct MCP 9 PASS, plus runtime Security
+Reviewer conditional GO. Current-generation reconciliation, Ready CPU pods,
+immutable images, private exact route, repeated official SDK two-tool structured
+calls without sessions and preserved direct MCP behavior satisfy this scope.
+The three YAML inputs/test guide meet the workload-annotation contract; no new
+deployment script or abstraction is required. README's direct-inference guide
+is retained; its recorded shell check is not inference evidence.
+
+Options: withhold all acceptance until a live outage; accept all original gates;
+or accept only demonstrated behavior and explicitly defer the missing test.
+Choose the third: the live upstream was healthy/health_ok/200, so offline MCP
+failure tests cannot establish deployed gateway outage independence. Gate C's
+unavailable-upstream portion remains DEFERRED, not passed; this is a narrowed
+acceptance, not complete satisfaction of the original outage contract. Obtain
+independent gateway discovery/overview/bounded-health and direct MCP probe evidence
+during a naturally occurring or separately authorized outage without production
+reconfiguration for this review. Phase 9/10 remain PLANNED; D-011 independent
+router inference acceptance still precedes any model route.
+
+The explicit human RBAC disposition below supersedes the earlier install hold:
+HIGH controller cluster-wide Secret reads and other authority are accepted,
+not remediated. Runtime review confirms scoped writes, TLS xDS, read-only proxy
+audience token/CA, generic proxy automount false/Secret-read denial and token-free
+MCP; it does not certify rotation, invalid-token rejection or process execution.
+MEDIUM unauthenticated plaintext access/MCP reflection and LOW availability
+remain. Foreign inbound Gateway Host is accepted; MCP upstream Host validation
+does not authenticate gateway callers. Bounded logs are not whole-image/logging
+certification. Revisit on changed trust, operators, targets, permissions, exposure
+or release; stop/roll back this layer if the trusted-use assumptions fail.
+No GPU availability, inference, model tool calling, agent loop, isolation,
+public/shared/customer/production acceptance follows. GPU absence remains an
+operator report, not a fresh observation. This disposition uses recorded reports
+and repository inspection only; no new runtime checks, delegation or mutation.
+The design-time statements below are historical contract/context, superseded
+where deployment evidence and this explicit narrowed acceptance apply.
+
+### Context, authority and alternatives
+
+The latest human request resumes gateway implementation and requires continued
+workload/contract-oriented annotations (constitution section 9). It supersedes
+historical gateway pauses, not D-014's trusted supervised single-operator
+boundary. The operator reports no GPU node now; this review makes no fresh
+cluster/cloud availability observation. Historical GPU/inference results remain
+historical. This Architect assignment changes documentation only.
+
+Options: wait for GPU recovery; install the control plane only; validate a
+CPU-only gateway/MCP path before adding models. Choose the third: it exercises
+the real gateway without GPU dependence or a fabricated healthy model backend.
+D-006 remains proposed for models; D-011 independent router-mode inference
+acceptance still gates any llama.cpp route, not MCP routing.
+
+### Official support and version evidence
+
+Reviewed on 2026-10-23:
+
+- [Helm installation](https://agentgateway.dev/docs/kubernetes/latest/documentation/install/helm/):
+	Gateway API standard CRDs v1.6.0 and OCI charts
+	`oci://cr.agentgateway.dev/charts/agentgateway-crds` and
+	`oci://cr.agentgateway.dev/charts/agentgateway`, both `v1.6.0`.
+- [Static MCP](https://agentgateway.dev/docs/kubernetes/latest/documentation/mcp/static-mcp/)
+	and [API reference](https://agentgateway.dev/docs/kubernetes/latest/reference/api/):
+	`agentgateway.dev/v1alpha1` AgentgatewayBackend MCP targets, explicit
+	`StreamableHTTP`, `/mcp`, `sessionRouting: Stateless`, and `prefixMode: Never`.
+	These fields were also found in the exact v1.6.0 CRD chart render, not merely
+	inferred from mutable `latest` documentation.
+- [Proxy overlays](https://agentgateway.dev/docs/kubernetes/latest/documentation/setup/customize/configs/):
+	AgentgatewayParameters `spec.service.spec` and
+	`spec.deployment.spec.template.spec` customize generated resources. The release
+	CRD supports both overlays, but opaque overlay acceptance is not proof that
+	Kubernetes will admit the generated object or that its process will run.
+- [Advanced settings](https://agentgateway.dev/docs/kubernetes/latest/documentation/install/advanced/)
+	and [xDS TLS](https://agentgateway.dev/docs/kubernetes/latest/documentation/install/tls/):
+	namespace-scoped provisioner writes, discovery selectors, token authentication
+	and self-managed xDS certificates. No cert-manager or new Azure identity needed.
+- Actual `helm show values ... --version v1.6.0` succeeded; controller chart
+	OCI digest `sha256:d3edf2b33cbf2e9d59406c207b8d3554597799707b8803b5f62e698fe5376e28`.
+	Corrected offline `helm template` confirmed app placement, scoped write binding,
+	controller image `cr.agentgateway.dev/controller:v1.6.0`, TLS and hardening.
+	Chart digest is not a container digest; resolve images before deployment.
+
+### Bounded implementation contract
+
+Recommended future artifacts: one annotated controller values file and one
+annotated gateway/MCP manifest under `k8s/gateway/`, one repeatable script under
+`scripts/` if needed, and focused tests following existing repository conventions.
+These files are PLANNED, not created by this review. Explain setting ownership,
+request flow, namespace/port agreement, side effects, trust limits and what each
+test proves; do not teach YAML/shell syntax or silently copy permissive samples.
+
+1. Read-only preflight must explicitly target `--context=aks-agw-lab`: confirm
+	 Ready app capacity, existing Gateway API/agentgateway CRDs and ownership,
+	 Helm releases, GatewayClasses and existing permissions. Never switch context.
+	 Stop on conflicting ownership or insufficient existing authority; do not
+	 replace shared CRDs or grant the operator additional roles to proceed.
+2. Proposed Helm values: top-level `nodeSelector: {workload: app}` and
+	 `tolerations: []`; `controller.replicaCount: 1`,
+	 `controller.service.type: ClusterIP`, `controller.xds.mode: tls`,
+	 `rbac.gatewayNamespaces: [agentgateway-system]`, `istio.enabled: false`,
+	 `istio.autoEnabled: false`, `inferenceExtension.enabled: false`,
+	 `agentgatewayModels.enabled: false`, `monitoring.enabled: false`.
+	 Limit `discoveryNamespaceSelectors` to `agentgateway-system` and `mcp` using
+	 `kubernetes.io/metadata.name`. Selectors limit discovery, NOT RBAC grants.
+	 Keep default non-root/read-only/drop-ALL/no-escalation controller settings;
+	 add `podSecurityContext.seccompProfile.type: RuntimeDefault`. Start with
+	 requests 100m/128Mi and limits 500m/512Mi via top-level `resources`; measure
+	 before tuning, never scale the app node pool implicitly. A trial with
+	 `controller.nodeSelector` rendered no selector; do not use that ignored key.
+3. Use GatewayClass `agentgateway`, controller name
+	 `agentgateway.dev/agentgateway`. In `agentgateway-system`, create
+	 AgentgatewayParameters `lab-internal` BEFORE Gateway `agentgateway-proxy`.
+	 Reference it through `Gateway.spec.infrastructure.parametersRef` with group
+	 `agentgateway.dev` and kind `AgentgatewayParameters`; do not let a bare Gateway
+	 reconcile first with an unwanted Service default. Set parameters
+	 `spec.service.spec.type: ClusterIP`, Deployment replicas 1 and pod
+	 `nodeSelector.workload: app`; no GPU request/tolerations, hostNetwork or hostPort.
+	 Set proxy `spec.resources` to the same initial CPU/memory bounds. Overlay
+	 container `agentgateway` with non-root, read-only rootfs, drop ALL,
+	 no privilege escalation and pod RuntimeDefault seccomp. Any runtime need to
+	 weaken these settings requires review rather than automatic fallback.
+4. Keep Gateway, HTTPRoute and AgentgatewayBackend in `agentgateway-system`;
+	 HTTP listener port 8080, `allowedRoutes.namespaces.from: Same`, exact `/mcp`
+	 route and no catch-all/model/administrative route. Backend has one named
+	 static target `lab-info`, host `lab-info.mcp.svc.cluster.local`, port 80,
+	 path `/mcp`, protocol `StreamableHTTP`, explicit `sessionRouting: Stateless`
+	 and `prefixMode: Never`. Host-based static routing avoids cross-namespace
+	 Kubernetes object references/ReferenceGrants; it is not network authorization.
+	 Do not add dynamic discovery, third-party targets or the docs' fetch tool.
+5. Preserve MCP's existing Host/Origin allowlists, fixed health target, two
+	 argument-free tools, token absence, probes and runtime hardening. Verify
+	 the gateway's upstream authority is the already allowlisted Service FQDN
+	 (with optional :80); do not disable DNS-rebinding protection, use wildcard
+	 origins, or strip foreign Origin headers to make a test pass. If a documented
+	 authority adjustment is needed, test it narrowly and review it separately.
+6. Operator access: localhost-bound API forwarding to the proxy Service,
+	 `kubectl --context=aks-agw-lab -n agentgateway-system port-forward --address 127.0.0.1 service/agentgateway-proxy 18000:8080`.
+	 Check port 18000 first; stop the operator's direct MCP forward before reuse,
+	 or choose another free port. Do not terminate unrelated listeners. This URL
+	 and generated Service name/port must be verified after reconciliation.
+
+### Credential boundary and deployment stop condition
+
+The native controller is NOT the token-free MCP workload. Rendered v1.6.0 RBAC
+includes cluster-wide get/list/watch of Secrets, ConfigMaps, pods, nodes and
+Services; TokenReview create; GatewayClass management and status writes.
+`rbac.gatewayNamespaces` limits deployer writes to `agentgateway-system`
+(Secrets/ConfigMaps/Services/ServiceAccounts/workloads/scaling/events), but
+does NOT remove cluster-wide reads or cluster-scoped authority. The controller
+uses its own Kubernetes ServiceAccount credentials, leader-election Lease and
+self-managed xDS certificate Secret. Proxy ServiceAccount tokens authenticate
+to xDS; preserve the controller-generated scoped projection/CA wiring and
+verify audience, lifetime, mount and lack of unnecessary API grants. Do not
+blanket-disable required tokens or downgrade authenticated TLS xDS to plaintext.
+Token projection details remain implementation inspection/runtime gates, not
+verified by this chart-only review. Never give these credentials to MCP.
+
+DECISION: supported configuration path exists, but deployment is NOT cleared by
+this review. New cluster-wide Secret-read authority is a significant security
+tradeoff beyond the old MCP acceptance. Require independent Security Reviewer
+assessment and explicit human disposition of the rendered RBAC before install.
+Do not silently accept the defaults or invent unsupported RBAC Helm switches.
+If narrower supported authority cannot satisfy the agreed boundary, stop and
+return for a decision. No Azure IAM grants, public/internal LoadBalancer,
+NodePort, public IP, new Azure resources, GPU capacity changes, Cilium migration
+or network-policy enforcement changes are authorized.
+
+### Human RBAC disposition (2026-10-23)
+
+Independent Security Reviewer rated the cluster-wide Secret-content read access
+HIGH and found no supported v1.6.0 chart setting that removes it. Namespace-scoped
+writes do not restrict these reads. Application traffic remains unauthenticated
+plaintext (MEDIUM) within the trusted supervised lab boundary.
+
+After seeing the permission scope and alternatives, the human explicitly selected
+"Accept reviewed permissions and deploy". This clears the RBAC installation hold
+for the D-015 CPU-only gateway/MCP scope, including the reviewed TokenReview,
+GatewayClass and other controller authorities. It accepts the blast radius; it
+does not remediate the finding, authorize reading Secret values for diagnostics,
+accept new Azure IAM grants or allow wider/public access. Preserve TLS-only xDS,
+scoped writes and all other implementation/runtime/security acceptance gates.
+
+### Acceptance, rollback and revisit
+
+- Gate A, source/permissions: pin exact charts/images; render and inspect all
+	RBAC, Services, placement and hardening; resolve the permission decision above.
+	Existing D-014 acceptance does not accept the new gateway/control plane.
+- Gate B, authorized deployment only: preflight then CRDs/controller/parameters/
+	Gateway/route in that order. Require GatewayClass Accepted, Gateway/listener
+	Accepted/Programmed and HTTPRoute Accepted/ResolvedRefs for current generations,
+	a Ready CPU-only proxy and verified ClusterIP-only exposure. Conditions and
+	pod readiness alone are not MCP compatibility evidence.
+- Gate C, independent Tester: real official SDK over the gateway endpoint,
+	initialize/initialized/list/both calls, negotiated protocol recorded, exactly
+	`get_lab_overview` and `get_model_health` with unchanged structured semantics.
+	Do not assume gateway stateless/session behavior from the direct MCP result;
+	test SDK 1.30.0/protocol 2025-11-25 interoperability, including multiple calls.
+	With upstream unavailable, overview and probes stay usable and health returns
+	its bounded safe observation (`unknown/connection_failed` or `unknown/timeout`
+	as actually observed), not inference. No upstream disruption is needed if
+	already unavailable; deterministic failure tests must not reconfigure production.
+- Gate D, security/acceptance: negative Host/Origin and unrelated-path checks;
+	no unexpected tool/target, prompt/body/credential logging or public Service;
+	review xDS authentication and actual token/RBAC scope. Network isolation,
+	application authentication/TLS and shared/untrusted readiness remain unclaimed.
+	Security Reviewer reviews; Architect accepts only independently evidenced scope.
+- Preserve the direct MCP last known good state. Rollback removes the new route
+	and Gateway/proxy, then controller only if owned exclusively by this release.
+	Do not delete shared CRDs, the MCP deployment/registry, llama.cpp or its PVC.
+	Stop forwarding and record failed attempts with bounded diagnostic evidence.
+- Later, when GPU capacity returns without changing approved capacity, follow
+	README's direct inference guide, obtain independent D-011 router acceptance,
+	and separately implement/test D-006 model routing. MCP success does not prove
+	model inference, model tool calling or an agent loop. Revisit before wider
+	operators/trust, new destinations, external access or release upgrades.
 
 ## D-006 agentgateway integrates via AgentgatewayBackend + HTTPRoute (proposed)
 

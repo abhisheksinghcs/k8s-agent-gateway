@@ -2,6 +2,179 @@
 
 Entries are observation, hypothesis, test, result.
 
+## D-011 Permission Checks Must Distinguish Symlinks (Tester, 2026-10-27)
+
+- Observation: an unrestricted `find /models -perm -0002` also lists the four
+	snapshot symlinks (conventional link mode 0777), although their regular blob
+	targets are 0664 and no directory/regular file is world-writable.
+- Hypothesis/check/result: inspect file types, not link mode alone. Existing-pod
+	`kubectl --context=aks-agw-lab -n llm exec llama-cpp-5f676cf74f-vzjtv
+	-c llama-server -- sh -c 'find /models \( -type f -o -type d \) -perm -0002 -print;
+	find -L /models -type f ! -readable -print;
+	find /models -type d \( ! -writable -o ! -executable \) -print'`
+	returned no violations as UID 10001. Dereferenced regular targets also passed
+	`-writable`; this checks permissions, not successful new-file I/O or remount
+	behavior. No arbitrary write probe/permission repair was performed.
+- Independently captured before/after file-type/size/path/symlink inventories
+	were identical across four successful bounded inference requests. Historical
+	CUDA/offload evidence and its provenance limits are recorded in STATUS;
+	do not conflate historical verbosity-4 ports with final default-3 workers.
+
+## D-011 Non-root Cache And Explicit Offload (Developer, 2026-10-27)
+
+- Observation: UID 0/Seccomp 0 baseline, four cache trees root-owned 0755/files
+	0644. The only 0700 directory was filesystem lost+found, not model weights.
+	Azure Disk CSIDriver v1.33.7 advertises fsGroupPolicy=File.
+- Hypothesis/test/result: supported fsGroup 10001/OnRootMismatch with numeric
+	UID/GID 10001 and RuntimeDefault admitted, rolled out and reached Ready.
+	Actual process Seccomp=2, CapEff=0, NoNewPrivs=1. Cache root/model directories
+	became root:10001 2775, lost+found 2770; temporary unique cache write probe
+	succeeded and was removed. No manual chmod/chown, privileged/root init,
+	replacement PVC or weight deletion. Group metadata changes persist on rollback;
+	OnRootMismatch can skip later matching mounts, not continuously repair all
+	descendants. Recheck if the image, CSI or cache layout changes.
+- Approved temporary verbosity 4 pod llama-cpp-578cb5c7b9-c9dx5, same pinned
+	build 11749/1d88cb05f, produced these reviewed correlations:
+
+| Preset | Child Port | CUDA Initialization | Actual Offload Line |
+|---|---|---|---|
+| qwen2.5-7b-instruct | 40649 | 20:19:52Z, found 1 CUDA devices | 20:20:39Z, `load_tensors: offloaded 29/29 layers to GPU` |
+| qwen2.5-coder-7b-instruct | 33453 | 20:20:44Z, found 1 CUDA devices | 20:21:31Z, `load_tensors: offloaded 29/29 layers to GPU` |
+| llama-3.1-8b-instruct | 36313 | 20:21:35Z, found 1 CUDA devices | 20:22:25Z, `load_tensors: offloaded 33/33 layers to GPU` |
+| phi-4 | 41137 | 20:22:30Z, found 1 CUDA devices | 20:24:00Z, `load_tensors: offloaded 41/41 layers to GPU` |
+
+- Each reported device 0 NVIDIA RTX Pro 6000 Blackwell DC-4-48Q MIG 4g.48gb,
+	compute capability 12.0, VMM no, 48838 MiB reported VRAM. All four public
+	arithmetic responses HTTP 200/exact 42, completion tokens 3/3/2/2; client
+	seconds 48.586/48.328/50.844/91.782 include loading, not throughput benchmarks.
+	Qwen was normally idle-LRU evicted for Phi. Router/observed workers retained
+	UID/GID 10001, Seccomp 2, CapEff 0, NoNewPrivs 1; inherited threshold 4.
+- Logging boundaries: selected configured key/logging overrides absent before
+	enabling 4; no private/credential requests, no level 5 or model-admin endpoint.
+	Full retained startup logs captured privately outside Git, only reviewed
+	initialization/layer/model excerpts retained here. Defender DaemonSets have
+	host log access; remote retention/access was not certified or changed.
+	Kubernetes logs may persist independently of local cleanup. Default 3 restored
+	by applying the checked-in manifest. It cannot provide these backend INFO lines.
+- T-003 recurred: sync terminal returned early/incomplete output while artifacts
+	continued appearing. Do not infer request failure or repeat blindly. Inspect
+	private HTTP status/body captures and allow the sequential client to finish;
+	do not enqueue additional terminal input into an active loop. Missing `rg`
+	caused an earlier read-only inspection exit 127; ordinary search tools suffice.
+- Rollback: reapply current manifest to remove temporary logging. For an actual
+	hardening regression only, remove its added pod securityContext and dry-run/
+	apply, retaining all pre-existing fields and PVC. This restores the insecure
+	baseline, not a security exception/acceptance. Independent gates still apply.
+- Sources: [Kubernetes security-context and volume ownership](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/),
+	pinned CUDA Dockerfile/common logging/server-models sources linked in the
+	earlier entry below. CSI ownership delegation can affect fsGroupChangePolicy;
+	observed permissions, not policy declaration alone, establish this result.
+
+## D-011 Router Discovery And GPU Diagnostics (2026-10-27)
+
+- Observation: independent direct tests found eight `/v1/models` entries despite
+	exactly four ConfigMap preset sections. Four have `source=preset` and the
+	approved friendly IDs; four have `source=cache` and repository IDs. Initially
+	all were unloaded. Health 200 and discovery alone still do not prove inference.
+- Hypothesis/test/result: discovery combines cached repositories and presets.
+	Compare the live mounted `/config/models.ini` with `source=preset` entries,
+	not total list length; exact four-preset equality passed. Request only the
+	approved preset IDs. Observe `status.value` through this existing GET for
+	loaded-state evidence; do not call model administration endpoints.
+- Observation: ordinary fourth-preset inference logged idle-LRU eviction of
+	Qwen; discovery remained at three loaded presets after Phi loaded. This did
+	not delete cached weights or test persistence/concurrency/failure recovery.
+- GPU diagnostic limit: current bounded logs contained load/generation events
+	but no explicit CUDA initialization/offloaded-layer counts. Do not fabricate
+	counts from `-ngl 99`. Existing-pod `nvidia-smi` showed actual compute workers
+	and GPU memory; worker cmdlines/maps correlated aliases and CUDA libraries.
+	Structured `--query-compute-apps=pid --format=csv,noheader,nounits` returned
+	`[Insufficient Permissions]` on this MIG setup despite the ordinary table
+	listing numeric PIDs. Do not parse that string as a PID or escalate privileges;
+	use the already observed table PIDs for bounded read-only `/proc` inspection.
+- Terminal evidence limit (T-003 recurrence): empty output or shell exit 130
+	did not reliably describe the HTTP result. Inspect workload/client state
+	before repeating; retain generated response bodies and curl transport output
+	outside the repo when useful. Llama's saved curl exitcode was 0/HTTP 200;
+	Phi's first transport artifact was empty even though its body was valid.
+	A body alone is insufficient HTTP-success evidence; a subsequent ordinary
+	warm request captured literal 200 headers. No 600-second timeout was observed.
+- Reproduce runtime checks with `kubectl --context=aks-agw-lab -n llm exec
+	<existing-pod> -c llama-server -- nvidia-smi` and bounded `logs` in the same
+	explicit context. Follow README's localhost-only direct-inference guide;
+	do not change capacity, workloads, logging config or model cache to get proof.
+
+## D-011 Backend INFO Logs Require Verbosity 4 (2026-10-27)
+
+- Observation: full retained replacement-pod logs had only 17 router startup
+	lines, no CUDA/offload evidence; the previously tested pod was NotFound.
+	Live imageID matched the manifest; executable reported build 11749,
+	commit `1d88cb05f`. Args/presets/environment had no logging override.
+- Hypothesis/check/result: backend INFO is filtered, rather than child stderr
+	requiring debug forwarding. Pinned source confirms default threshold 3,
+	backend INFO/CONT mapped to TRACE=4 and discarded by the callback. Both
+	CUDA initialization and `offloaded X/Y layers to GPU` use backend INFO.
+	Router forwards child stderr at level 0. `-ngl 99` cannot prove offload.
+- Authoritative pinned sources:
+	[threshold/callback](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/common/log.cpp#L548),
+	[callback installation](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/common/common.cpp#L388),
+	[GGML linkage](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/src/llama-impl.cpp#L55),
+	[child forwarding](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/tools/server/server-models.cpp#L187),
+	[offload message](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/src/llama-model.cpp#L1991),
+	[CUDA message](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/ggml/src/ggml-cuda/ggml-cuda.cu#L311),
+	[supported flags/default](https://github.com/ggml-org/llama.cpp/blob/1d88cb05f1a257f90741538ca3aca6c1b015c6d3/tools/server/README.md#L106).
+- Reproduce read-only: `kubectl --context=aks-agw-lab -n llm logs
+	pod/<existing-pod> -c llama-server --timestamps --tail=-1`; filter the full
+	stream for `CUDA|cuda|offload|layer|spawn`, retaining bounded excerpts and
+	total counts. Version: `kubectl --context=aks-agw-lab -n llm exec
+	<existing-pod> -c llama-server -- sh -c '/app/llama-server --version 2>&1'`.
+- Recommended Developer change only: temporary `--log-verbosity 4` (supported
+	equivalent `LLAMA_ARG_LOG_VERBOSITY=4`), not level 5/`--verbose` or prompt
+	logging. Requires separately authorized Recreate interruption; no change was
+	made here. Afterward one sequential normal request per approved preset plus
+	full startup logs must correlate alias/port, CUDA device and observed X/Y
+	offloaded layers. No retrospective log recovery API was identified; raising
+	verbosity later cannot reconstruct discarded startup messages. Exact layer
+	counts and the explicit log gate remain unverified until that test succeeds.
+
+## D-015 Gateway/MCP Deployment (2026-10-23)
+
+- Observation: v1.6.0 controller/proxy rolled out with TLS xDS, CPU placement,
+	hardening and private Services; all current-generation conditions were true.
+	SDK 1.30.0 negotiated 2025-11-25 and preserved both unprefixed tools/no sessions.
+- Contract: controller placement/resources are TOP-LEVEL Helm values, not
+	controller.nodeSelector. Put AgentgatewayParameters in place BEFORE Gateway;
+	otherwise generated Service defaults could briefly expose it. Use named
+	agentgateway container overlays to preserve generated probes and credentials.
+- Credential evidence: native controller API token; proxy audience agentgateway,
+	requested 43200-second token/CA read-only mounts, HTTPS xDS:9978 and generic
+	automount false. MCP stays token-free. Do not weaken xDS/hardening to fix errors.
+- Observation/test: every request through exact /mcp succeeded; foreign Origin
+	returned upstream 403 unchanged. Seven unrelated paths returned 404. Direct
+	MCP probes returned 200, foreign Host 421, foreign Origin 403. A one-off direct
+	diagnostic asserted 400 instead of 403 and failed; corrected assertion passed.
+	Do not change service behavior to satisfy an incorrect diagnostic expectation.
+- Observation: health was healthy/health_ok/200 despite the operator's absent-GPU
+	report. Conclusion: health is not inference/GPU-allocation evidence. Leave
+	llama.cpp/PVC/pools untouched; gateway unavailable-upstream proof remains open
+	rather than manufacturing disruption. Local deterministic failure tests pass.
+- Tool mechanics: Helm 4.2.2 rejects old `helm list --all`; use
+	`helm list --kube-context=aks-agw-lab --all-namespaces`. RBAC templates are
+	role.yaml and serviceaccount.yaml (not clusterrole.yaml/rolebinding.yaml).
+	Exact generated pod source is controller/pkg/helm/agentgateway/templates/_helpers.tpl,
+	not _pod.tpl (404). Use explicit resource/name syntax for admission lookups,
+	not a comma-joined name interpreted as a resource type. These read-only command
+	errors caused no deployment changes. A dedicated deferred-tool loader was
+	unavailable, so cluster commands used terminal with explicit context throughout.
+- Safety: standard Gateway API v1.6.0 includes 10 CRDs PLUS its official CRD
+	safe-upgrade policy/binding, all absent before this install. Keep them on
+	rollback; never delete unrelated/shared CRDs. Controller Secret reads remain
+	reviewed HIGH/human accepted, not fixed by namespace selection/write scoping.
+- Reproduce: [README gateway guide](../README.md#private-gateway-and-mcp-d-015-deployed).
+	Source/default tests are offline; set GATEWAY_TEST_URL only to a localhost-bound
+	proxy forward for real SDK/negative checks. No wildcard allowlists, Origin
+	stripping, model routes, public exposure or network-policy changes are needed.
+
 ## AMD64 uv crashes under local QEMU (D-014 execution, 2026-10-23)
 
 - Observation: synchronous `docker buildx build --platform linux/amd64 --load

@@ -1,0 +1,58 @@
+# D-015 generated-proxy contract. APPLY BEFORE gateway.yaml: a bare Gateway
+# otherwise inherits the controller's Service defaults, potentially exposing it.
+# Reading map: private Service -> pinned proxy -> bounded CPU pod overlay.
+# The controller owns the generated Deployment/Service/ServiceAccount; edit this
+# input, not those outputs. Overlays merge by container name, preserving probes,
+# xDS configuration, token/CA volumes and read-only mounts from release v1.6.0.
+# The release supplies UID 10101, /healthz/ready on admin port 15021, a writable
+# emptyDir /tmp for diagnostics and a session-key Secret reference; no Secret
+# values belong here. Only listener 8080 is published by the ClusterIP Service.
+# The inherited unprivileged-port sysctl does not enable host networking/ports.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayParameters
+metadata:
+  name: lab-internal
+  namespace: agentgateway-system
+spec:
+  service:
+    spec:
+      type: ClusterIP
+  image:
+    registry: cr.agentgateway.dev
+    repository: agentgateway
+    tag: v1.6.0
+    digest: sha256:9d3e6044ddcdc0878b1787f77bd401252b95e22684203fb5e874c4c42d2ed90c
+    pullPolicy: IfNotPresent
+  istio:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  deployment:
+    spec:
+      replicas: 1
+      template:
+        spec:
+          nodeSelector:
+            workload: app
+          tolerations: []
+          # This disables the generic Kubernetes API token, NOT the generated
+          # audience=agentgateway, requested 43200s projection needed for xDS.
+          # The controller's API token is a separate, deliberately retained need.
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: agentgateway
+              securityContext:
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]

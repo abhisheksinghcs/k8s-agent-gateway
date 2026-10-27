@@ -67,6 +67,20 @@ spec:
           value: spot
           effect: NoSchedule
       automountServiceAccountToken: false
+      # Router and spawned workers share this numeric identity; no image user
+      # account is required. RuntimeDefault must remain compatible with CUDA.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+        # The existing Azure Disk cache was root-owned. Supported volume-group
+        # handling grants this workload group access without a root init/chmod.
+        # First mount can update volume metadata; later matching roots skip it.
+        # This does not isolate HTTP clients or make model administration safe.
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: llama-server
           # server-cuda13, build b11749-1d88cb05f, validated 2026-10-20; the digest is the pin.
